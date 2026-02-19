@@ -1,86 +1,107 @@
-import User from "../models/usermodel.js";
+
+import validator from "validator";
+import bcrypt from "bcrypt";
 import { sendOtpMail } from "../utils/nodemailer.js";
+import jwt from "jsonwebtoken";
+import User from "../models/usermodel.js";
 import gentoken from "../utils/token.js";
-import bcrypt from "bcryptjs"
 
-export const signUp=async(req,res)=>{
-    try{
-        const{fullname,email,password,mobile,role}=req.body;
-        let user=await User.findOne({email})
-        if(user){
-            return res.status(400).json({message:"user already exixt. "})
-        }
-        if(password.length<6){
-             return res.status(400).json({message:"password must be of atleast 8 character "})
-        }
-        if(mobile.length<=9){
-             return res.status(400).json({message:"enter a valid mobile number  "})
 
-        }
-        const hashedpassword=await bcrypt.hash(password,10)
-        user=await User.create({
-            fullname,
-            email,
-            mobile,
-            role,
-            password:hashedpassword
-        })
-        const token=await gentoken(user._id)
-        res.cookie("token",token,{
-            secure:true,
-            sameSite:"none",
-            maxAge:7*24*60*60*1000,
-            httpOnly:true
-        })
-        return res.status(201).json(user)
+
+
+const signup = async (req, res) => {
+  try {
+    const { fullname, email, password } = req.body;
+
+    if (!fullname || !email || !password) {
+      return res.json({ success: false, message: "Missing Details" });
     }
-    catch(error){
-        return res.status(500).json(`signup error ${error}`)
+
+    // validating email format
+    if (!validator.isEmail(email)) {
+      return res.json({ success: false, message: "enter a valid email" });
     }
-}
+
+    // validating strong password
+    if (password.length < 8) {
+      return res.json({ success: false, message: "enter a strong password" });
+    }
+
+    // hashing user password
+    const salt = await bycrypt.genSalt(10);
+    const hashedPassword = await bycrypt.hash(password, salt);
+
+    const userData = {
+      fullname,
+      email,
+      password: hashedPassword,
+    };
+
+    const newUser = new User(userData);
+    const user = await newUser.save();
+
+    const token = jwt.sign({ _id: user._id }, process.env.JWT_SECRET);
+
+    res.json({ success: true, token });
+  } catch (error) {
+    console.log(error);
+    res.json({ success: false, message: error.message });
+  }
+};
 
 
-export const signIn=async(req,res)=>{
-    try{
-        const{email,password}=req.body;
-        const user=await User.findOne({email})
-        if(!user){
-            return res.status(400).json({message:"user does not exixt . "})
-        } 
-        
-        const isMatch=await bcrypt.compare(password,user.password)
-        if(!isMatch){
-            return res.status(400).json({message:"incorrect password "})
-        }
-        
-        
-        const token=await gentoken(user._id)
-        res.cookie("token",token,{
-            secure:true,
-            sameSite:"none",
-            maxAge:7*24*60*60*1000,
-            httpOnly:true
-        })
-        return res.status(201).json(user)
+const signin= async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    const user = await userModel.findOne({ email });
+
+    if (!user) {
+      return res.json({ success: false, message: "User does not exist" });
     }
-    catch(error){
-        return res.status(500).json(`signin error ${error}`)
+
+    const isMatch = await bycrypt.compare(password, user.password);
+
+    if (isMatch) {
+      const token = jwt.sign({ _id: user._id }, process.env.JWT_SECRET);
+      res.json({ success: true, token });
+    } else {
+      res.json({ success: false, message: "Invalid credentials" });
     }
-}  
+  } catch (error) {
+    console.log(error);
+    res.json({ success: false, message: error.message });
+  }
+};
 
 
-export const signOut=async(req,res)=>{
-    try{
-        res.clearCookie("token")
-        return res.status(200).json({message:"log out suesscufully"})   
-        
-    }
-    catch(error){
-        return res.status(500).json(`signout  error ${error}`)
-    }
-}
 
-export const sendOtp=async (req,res) => {
+
+const googleAuth = async (req, res) => {
+  try {
+    const { fullname, email } = req.body;
+    if (!fullname || !email) {
+      return res.status(400).json({ message: "Missing Google user details" });
+    }
+    let user = await User.findOne({ email });
+    if (!user) {
+      user = await User.create({ fullname, email });
+    }
+    const token = await gentoken(user._id);
+    res.cookie("token", token, {
+      secure: true,
+      sameSite: "none",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+      httpOnly: true
+    });
+    return res.status(200).json(user);
+  } catch (error) {
+    return res.status(500).json(`googleAuth error ${error}`);
+    }
+};
+
+
+
+ const sendOtp=async (req,res) => {
   try {
     const {email}=req.body
     const user=await User.findOne({email})
@@ -100,7 +121,7 @@ export const sendOtp=async (req,res) => {
 }
 
 
-export const verifyOtp=async (req,res) => {
+ const verifyOtp=async (req,res) => {
     try {
         const {email,otp}=req.body
         const user=await User.findOne({email})
@@ -119,7 +140,7 @@ export const verifyOtp=async (req,res) => {
 
 
 
-export const resetPassword=async (req,res) => {
+const resetPassword=async (req,res) => {
     try {
         const {email,newPassword}=req.body
         const user=await User.findOne({email})
@@ -138,28 +159,7 @@ export const resetPassword=async (req,res) => {
 
 
 
-export const googleAuth=async (req,res) => {
-    try {
-        const {fullname,email,mobile,role}=req.body
-        let user=await User.findOne({email})
-        if(!user){
-            user=await User.create({
-                fullname,email,mobile,role
-            })
-        }
-
-        const token=await gentoken(user._id)
-        res.cookie("token",token,{
-            secure:true,
-            sameSite:"none",
-            maxAge:7*24*60*60*1000,
-            httpOnly:true
-        })
-  
-        return res.status(200).json(user)
 
 
-    } catch (error) {
-         return res.status(500).json(`googleAuth error ${error}`)
-    }
-}
+
+export { signup, signin, googleAuth, sendOtp, verifyOtp, resetPassword };

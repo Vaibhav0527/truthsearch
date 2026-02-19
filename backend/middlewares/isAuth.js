@@ -5,7 +5,7 @@ const isAuth=async (req,res,next) => {
         if(!token){
             return res.status(400).json({message:"token not found"})
         }
-        const decodeToken=jwt.verify(token,process.env.JWT_SCERET)
+        const decodeToken=jwt.verify(token,process.env.JWT_SECRET)
         if(!decodeToken){
  return res.status(400).json({message:"token not verify"})
         }

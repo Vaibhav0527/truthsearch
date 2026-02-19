@@ -1,16 +1,29 @@
-import React from 'react'
+import React from "react";
 
-import useGetCurrentUser from './hooks/useGetCurrentUser'
-import { useDispatch} from 'react-redux'
+import { useSelector } from "react-redux";
+import { Route, Routes, Navigate } from "react-router-dom";
+import SignUp from "../pages/SignUp";
+import SignIn from "../pages/SignIn";
+import useGetCurrentUser from "../hooks/useGetCurrentUser";
 
 
-export const serverUrl="http://localhost:8000"
 const App = () => {
-  const dispatch=useDispatch()
-  useGetCurrentUser()
-  return (
-    <div>App</div>
-  )
-}
+  // useGetCurrentUser();
 
-export default App
+  const { userData } = useSelector((state) => state.user);
+
+  return (
+    <Routes>
+      <Route
+        path="/signup"
+        element={true ? <SignUp /> : <Navigate to="/" />}
+      />
+      <Route
+        path="/signin"
+        element={!userData ? <SignIn /> : <Navigate to="/" />}
+      />
+    </Routes>
+  );
+};
+
+export default App;

@@ -13,10 +13,6 @@ const userSchema = new mongoose.Schema({
         type: String,
 
     },
-    mobile: {
-        type: String,
-        required: true
-    },
     
     resetOtp: {
         type: String,
