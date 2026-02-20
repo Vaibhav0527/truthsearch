@@ -5,6 +5,7 @@ import connectDB from "./config/mongodb.js";
 import cookieParser from "cookie-parser";
 import authRouter from "./routes/authroutes.js"
 import userRouter from "./routes/userroutes.js"
+import historyRouter from "./routes/historyroutes.js"
 
 
 
@@ -30,6 +31,7 @@ connectDB();
 
 app.use("/api/auth",authRouter)
 app.use("/api/user",userRouter)
+app.use("/api/history",historyRouter)
 
 
 app.get("/", (req, res) => {

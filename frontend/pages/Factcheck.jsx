@@ -7,9 +7,10 @@ import TiltCard from "../components/TiltCard";
 import Btn from "../components/Btn";
 import TrustGauge from "../components/TrustGauge";
 import Scanner from "../components/Scanner";
-import { serverUrl } from "../src/config";
+import { serverUrl, backendUrl } from "../src/config";
 
 const API = serverUrl; // e.g. http://localhost:8000
+const BACKEND = backendUrl; // e.g. http://localhost:4000
 
 // ─── HELPERS ─────────────────────────────────────────────────────────────────
 const verdictColor = (v, t) => {
@@ -91,6 +92,11 @@ export default function Factcheck({ t }) {
 
   const [rRef, rVis] = useReveal(0.04);
 
+  // ── Async-safe history save (never blocks main flow) ──
+  const saveToHistory = (entry) => {
+    axios.post(`${BACKEND}/api/history/save`, entry).catch(() => {});
+  };
+
   // ── Text fact-check ──
   const runTextCheck = async () => {
     if (!claim.trim()) return;
@@ -98,6 +104,14 @@ export default function Factcheck({ t }) {
     try {
       const { data } = await axios.post(`${API}/fact-check`, { claim: claim.trim() });
       setResult(data);
+      saveToHistory({
+        input_type: "text",
+        original_input: claim.trim(),
+        verdict: data.verdict,
+        confidence: data.confidence,
+        explanation: data.explanation,
+        sources: data.sources || [],
+      });
     } catch (err) {
       setError(err.response?.data?.detail || err.message || "Something went wrong");
     } finally {
@@ -120,6 +134,14 @@ export default function Factcheck({ t }) {
       const { data } = await axios.post(`${API}/ocr`, fd, { headers: { "Content-Type": "multipart/form-data" } });
       setExtractedText(data.extracted_text || "");
       setImgResult(data.result);
+      saveToHistory({
+        input_type: "image",
+        original_input: data.extracted_text || "[Image uploaded]",
+        verdict: data.result.verdict,
+        confidence: data.result.confidence,
+        explanation: data.result.explanation,
+        sources: data.result.sources || [],
+      });
     } catch (err) {
       setImgError(err.response?.data?.detail || err.message || "Something went wrong");
     } finally {
@@ -192,6 +214,14 @@ export default function Factcheck({ t }) {
         setVoiceResult(data.result);
         setAudioResponse(data.audio_response || null);
         setDetectedLang(data.detected_language || "");
+        saveToHistory({
+          input_type: "voice",
+          original_input: data.transcribed_text || "[Voice recording]",
+          verdict: data.result.verdict,
+          confidence: data.result.confidence,
+          explanation: data.result.explanation,
+          sources: data.result.sources || [],
+        });
 
         // Build a Blob URL for reliable replay (data URIs can fail on large audio)
         if (data.audio_response) {
@@ -241,6 +271,15 @@ export default function Factcheck({ t }) {
         timeout: 120000,
       });
       setAiResult(data);
+      saveToHistory({
+        input_type: "ai_image",
+        original_input: "[Image uploaded for AI detection]",
+        verdict: data.verdict,
+        confidence: data.confidence_percentage,
+        explanation: data.detailed_reasoning,
+        visual_inconsistencies: data.visual_inconsistencies || [],
+        ai_generation_indicators: data.ai_generation_indicators || [],
+      });
     } catch (err) {
       setAiError(err.response?.data?.detail || err.message || "AI detection failed");
     } finally {

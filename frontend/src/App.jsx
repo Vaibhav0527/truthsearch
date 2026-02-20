@@ -104,7 +104,7 @@ const App = () => {
           <Route path="/workspace" element={userData ? <WorkspacePage t={t} setPage={setPage} isDark={isDark} /> : <Navigate to="/login" />} />
           <Route path="/image" element={userData ? <ImagePage t={t} setPage={setPage} isDark={isDark} /> : <Navigate to="/login" />} />
           <Route path="/factcheck" element={ <Factcheck t={t} setPage={setPage} isDark={isDark}  />} />
-          <Route path="/history" element={userData ? <HistoryPage t={t} setPage={setPage} isDark={isDark} /> : <Navigate to="/login" />} />
+          <Route path="/history" element={ <HistoryPage t={t} setPage={setPage} isDark={isDark} />  } />
         </Routes>
       )}
     </div>
