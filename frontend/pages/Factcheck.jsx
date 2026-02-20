@@ -69,7 +69,7 @@ export default function Factcheck({ t }) {
     try {
       const fd = new FormData();
       fd.append("file", imgFile);
-      const { data } = await axios.post(`${API}/ocr`, fd, { headers: { "Content-Type": "multipart/form-data" } });
+      const { data } = await axios.post("http://localhost:8000/ocr", fd, { headers: { "Content-Type": "multipart/form-data" } });
       setExtractedText(data.extracted_text || "");
       setImgResult(data.result);
     } catch (err) {
