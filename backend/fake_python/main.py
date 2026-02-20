@@ -22,6 +22,3 @@ if __name__ == "__main__":
     print("\n===== FACT CHECK =====\n")
     print("Verdict:",result.verdict)
     print("Explanation:",result.explanation)
-
-
-

@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import axios from "axios";
 import Ic from "../icons";
 import { useReveal } from "../hooks/useReveal";
@@ -22,6 +22,30 @@ const verdictColor = (v, t) => {
 const verdictBg = (v, t) => verdictColor(v, t) + "15";
 const verdictBorder = (v, t) => verdictColor(v, t) + "35";
 
+const LANGUAGES = [
+  { code: "auto", label: "Auto-detect" },
+  { code: "en", label: "English" },
+  { code: "es", label: "Español" },
+  { code: "fr", label: "Français" },
+  { code: "de", label: "Deutsch" },
+  { code: "hi", label: "हिन्दी" },
+  { code: "pt", label: "Português" },
+  { code: "ru", label: "Русский" },
+  { code: "it", label: "Italiano" },
+  { code: "ja", label: "日本語" },
+  { code: "ko", label: "한국어" },
+  { code: "zh", label: "中文" },
+  { code: "ar", label: "العربية" },
+  { code: "tr", label: "Türkçe" },
+  { code: "nl", label: "Nederlands" },
+  { code: "pl", label: "Polski" },
+  { code: "sv", label: "Svenska" },
+  { code: "ta", label: "தமிழ்" },
+  { code: "te", label: "తెలుగు" },
+  { code: "bn", label: "বাংলা" },
+  { code: "ur", label: "اردو" },
+];
+
 // ─── FACT CHECK PAGE ─────────────────────────────────────────────────────────
 export default function Factcheck({ t }) {
   const [tab, setTab] = useState("text"); // "text" | "image"
@@ -41,6 +65,21 @@ export default function Factcheck({ t }) {
   const [imgError, setImgError] = useState(null);
   const fileRef = useRef(null);
 
+  // Voice state
+  const [recording, setRecording] = useState(false);
+  const [voiceAnalyzing, setVoiceAnalyzing] = useState(false);
+  const [voiceResult, setVoiceResult] = useState(null);
+  const [voiceError, setVoiceError] = useState(null);
+  const [transcribedText, setTranscribedText] = useState("");
+  const [audioResponse, setAudioResponse] = useState(null);   // base64 mp3
+  const [voiceDuration, setVoiceDuration] = useState(0);
+  const [voiceLang, setVoiceLang] = useState("auto");          // selected language
+  const [detectedLang, setDetectedLang] = useState("");        // language Whisper detected
+  const mediaRecorder = useRef(null);
+  const audioChunks = useRef([]);
+  const timerRef = useRef(null);
+  const audioBlobUrl = useRef(null);                            // for reliable replay
+
   const [rRef, rVis] = useReveal(0.04);
 
   // ── Text fact-check ──
@@ -48,7 +87,7 @@ export default function Factcheck({ t }) {
     if (!claim.trim()) return;
     setAnalyzing(true); setResult(null); setError(null);
     try {
-      const { data } = await axios.post("http://localhost:8000/fact-check", { claim: claim.trim() });
+      const { data } = await axios.post(`${API}/fact-check`, { claim: claim.trim() });
       setResult(data);
     } catch (err) {
       setError(err.response?.data?.detail || err.message || "Something went wrong");
@@ -69,7 +108,7 @@ export default function Factcheck({ t }) {
     try {
       const fd = new FormData();
       fd.append("file", imgFile);
-      const { data } = await axios.post("http://localhost:8000/ocr", fd, { headers: { "Content-Type": "multipart/form-data" } });
+      const { data } = await axios.post(`${API}/ocr`, fd, { headers: { "Content-Type": "multipart/form-data" } });
       setExtractedText(data.extracted_text || "");
       setImgResult(data.result);
     } catch (err) {
@@ -79,9 +118,106 @@ export default function Factcheck({ t }) {
     }
   };
 
-  const activeResult = tab === "text" ? result : imgResult;
-  const isLoading = tab === "text" ? analyzing : imgAnalyzing;
-  const activeError = tab === "text" ? error : imgError;
+  // ── Voice helpers ──
+  const getSupportedMime = () => {
+    const types = ["audio/webm;codecs=opus", "audio/webm", "audio/ogg;codecs=opus", "audio/mp4"];
+    for (const t of types) { if (MediaRecorder.isTypeSupported(t)) return t; }
+    return "";
+  };
+
+  const startRecording = useCallback(async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mime = getSupportedMime();
+      const opts = mime ? { mimeType: mime } : {};
+      const mr = new MediaRecorder(stream, opts);
+      audioChunks.current = [];
+
+      mr.ondataavailable = (e) => { if (e.data.size > 0) audioChunks.current.push(e.data); };
+      mr.onstop = () => { stream.getTracks().forEach(t => t.stop()); };
+
+      mr.start(250); // timeslice for reliable data
+      mediaRecorder.current = mr;
+      setRecording(true);
+      setVoiceDuration(0);
+      setVoiceResult(null); setVoiceError(null); setTranscribedText(""); setAudioResponse(null);
+      setDetectedLang("");
+      if (audioBlobUrl.current) { URL.revokeObjectURL(audioBlobUrl.current); audioBlobUrl.current = null; }
+
+      timerRef.current = setInterval(() => setVoiceDuration(d => d + 1), 1000);
+    } catch (err) {
+      setVoiceError("Microphone access denied. Please allow mic access.");
+    }
+  }, []);
+
+  const stopAndSend = useCallback(() => {
+    if (!mediaRecorder.current || mediaRecorder.current.state === "inactive") return;
+    clearInterval(timerRef.current);
+
+    // Wrap in a promise so we wait for onstop to fire before reading chunks
+    const mr = mediaRecorder.current;
+    const prevOnStop = mr.onstop;
+
+    mr.onstop = async (e) => {
+      if (prevOnStop) prevOnStop(e);
+
+      const mime = mr.mimeType || "audio/webm";
+      const blob = new Blob(audioChunks.current, { type: mime });
+      audioChunks.current = [];
+      setRecording(false);
+
+      if (blob.size < 100) {
+        setVoiceError("Recording too short. Please try again.");
+        return;
+      }
+
+      // Send to backend
+      setVoiceAnalyzing(true);
+      try {
+        const ext = mime.includes("webm") ? ".webm" : mime.includes("ogg") ? ".ogg" : mime.includes("mp4") ? ".mp4" : ".webm";
+        const fd = new FormData();
+        fd.append("file", blob, `recording${ext}`);
+        fd.append("language", voiceLang);
+        const { data } = await axios.post(`${API}/voice-check`, fd, { timeout: 120000 });
+        setTranscribedText(data.transcribed_text || "");
+        setVoiceResult(data.result);
+        setAudioResponse(data.audio_response || null);
+        setDetectedLang(data.detected_language || "");
+
+        // Build a Blob URL for reliable replay (data URIs can fail on large audio)
+        if (data.audio_response) {
+          const raw = atob(data.audio_response);
+          const bytes = new Uint8Array(raw.length);
+          for (let i = 0; i < raw.length; i++) bytes[i] = raw.charCodeAt(i);
+          const mp3Blob = new Blob([bytes], { type: "audio/mpeg" });
+          if (audioBlobUrl.current) URL.revokeObjectURL(audioBlobUrl.current);
+          audioBlobUrl.current = URL.createObjectURL(mp3Blob);
+
+          // Auto-play the TTS response
+          const audio = new Audio(audioBlobUrl.current);
+          audio.play().catch(() => {});
+        }
+      } catch (err) {
+        setVoiceError(err.response?.data?.detail || err.message || "Voice check failed");
+      } finally {
+        setVoiceAnalyzing(false);
+      }
+    };
+
+    mr.stop();
+  }, []);
+
+  // Cleanup timer & blob URL on unmount
+  useEffect(() => () => {
+    clearInterval(timerRef.current);
+    if (audioBlobUrl.current) URL.revokeObjectURL(audioBlobUrl.current);
+  }, []);
+
+  const fmtTime = (s) => `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
+
+  const activeResult = tab === "text" ? result : tab === "image" ? imgResult : voiceResult;
+  const isLoading = tab === "text" ? analyzing : tab === "image" ? imgAnalyzing : voiceAnalyzing;
+  const activeError = tab === "text" ? error : tab === "image" ? imgError : voiceError;
 
   const steps = ["Searching evidence", "Cross-referencing", "AI verification", "Building verdict"];
 
@@ -99,7 +235,7 @@ export default function Factcheck({ t }) {
 
         {/* Tabs */}
         <div style={{ display: "flex", gap: 6, marginBottom: 28 }}>
-          {[{ id: "text", label: "Text Claim", icon: <Ic.Search s={14} /> }, { id: "image", label: "Image OCR", icon: <Ic.Img s={14} /> }].map(tb => (
+          {[{ id: "text", label: "Text Claim", icon: <Ic.Search s={14} /> }, { id: "image", label: "Image OCR", icon: <Ic.Img s={14} /> }, { id: "voice", label: "Voice", icon: <Ic.Mic s={14} /> }].map(tb => (
             <button
               key={tb.id}
               onClick={() => setTab(tb.id)}
@@ -177,6 +313,160 @@ export default function Factcheck({ t }) {
           </>
         )}
 
+        {/* ── VOICE TAB ── */}
+        {tab === "voice" && (
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 20 }}>
+
+            {/* Language selector */}
+            <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: 6 }}>
+              <label style={{
+                fontFamily: "'DM Mono',monospace", fontSize: 10, color: t.faint,
+                letterSpacing: ".12em", textTransform: "uppercase",
+              }}>
+                Language
+              </label>
+              <select
+                value={voiceLang}
+                onChange={e => setVoiceLang(e.target.value)}
+                disabled={recording || voiceAnalyzing}
+                style={{
+                  width: "100%", padding: "10px 14px", borderRadius: 10,
+                  background: t.input, border: `1px solid ${t.border}`,
+                  color: t.text, fontFamily: "'Space Grotesk',sans-serif", fontSize: 13,
+                  outline: "none", cursor: "pointer", transition: "border-color .25s",
+                  appearance: "none",
+                  backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E")`,
+                  backgroundRepeat: "no-repeat",
+                  backgroundPosition: "right 12px center",
+                }}
+              >
+                {LANGUAGES.map(l => (
+                  <option key={l.code} value={l.code}>{l.label} {l.code !== "auto" ? `(${l.code})` : ""}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Mic button with pulse animation */}
+            <div style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              {recording && (
+                <>
+                  <div style={{
+                    position: "absolute", width: 130, height: 130, borderRadius: "50%",
+                    background: t.accent + "12", animation: "voicePulse 1.5s ease-in-out infinite",
+                  }} />
+                  <div style={{
+                    position: "absolute", width: 160, height: 160, borderRadius: "50%",
+                    background: t.accent + "08", animation: "voicePulse 1.5s .3s ease-in-out infinite",
+                  }} />
+                </>
+              )}
+              <button
+                onClick={recording ? stopAndSend : startRecording}
+                disabled={voiceAnalyzing}
+                data-mag
+                style={{
+                  width: 100, height: 100, borderRadius: "50%",
+                  background: recording ? "#ef4444" : voiceAnalyzing ? t.faint : `linear-gradient(135deg, ${t.accent}, ${t.accent}cc)`,
+                  border: "none", cursor: voiceAnalyzing ? "wait" : "pointer",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  color: "#fff", transition: "all .3s", position: "relative", zIndex: 1,
+                  boxShadow: recording ? "0 0 30px rgba(239,68,68,.35)" : `0 0 30px ${t.accent}25`,
+                }}
+              >
+                {recording
+                  ? <Ic.X s={32} />
+                  : <Ic.Mic s={36} />}
+              </button>
+            </div>
+
+            {/* Status text */}
+            <div style={{ textAlign: "center" }}>
+              <p style={{
+                fontFamily: "'Space Grotesk',sans-serif", fontSize: 15, fontWeight: 600,
+                color: recording ? "#ef4444" : voiceAnalyzing ? t.accent : t.muted,
+              }}>
+                {recording ? "Recording…" : voiceAnalyzing ? "Processing…" : "Tap to record"}
+              </p>
+              {recording && (
+                <p style={{ fontFamily: "'DM Mono',monospace", fontSize: 22, color: t.text, marginTop: 6, letterSpacing: ".1em" }}>
+                  {fmtTime(voiceDuration)}
+                </p>
+              )}
+              {!recording && !voiceAnalyzing && (
+                <p style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, color: t.faint, marginTop: 6, letterSpacing: ".12em" }}>
+                  Speak your claim clearly, then tap again to verify
+                </p>
+              )}
+              {detectedLang && !recording && !voiceAnalyzing && (
+                <p style={{
+                  fontFamily: "'DM Mono',monospace", fontSize: 10, marginTop: 8,
+                  color: t.accent, letterSpacing: ".06em",
+                  padding: "3px 10px", borderRadius: 12,
+                  background: t.accent + "10", border: `1px solid ${t.accent}30`,
+                  display: "inline-block",
+                }}>
+                  Detected: {(LANGUAGES.find(l => l.code === detectedLang) || {}).label || detectedLang}
+                </p>
+              )}
+            </div>
+
+            {/* Waveform bars while recording */}
+            {recording && (
+              <div style={{ display: "flex", alignItems: "center", gap: 3, height: 40 }}>
+                {Array.from({ length: 24 }, (_, i) => (
+                  <div key={i} style={{
+                    width: 3, borderRadius: 2, background: t.accent,
+                    animation: `waveBar .8s ${i * 0.05}s ease-in-out infinite alternate`,
+                  }} />
+                ))}
+              </div>
+            )}
+
+            {/* Transcribed text */}
+            {transcribedText && !voiceAnalyzing && (
+              <div style={{
+                width: "100%", background: t.input, border: `1px solid ${t.border}`,
+                borderRadius: 10, padding: "14px 16px",
+              }}>
+                <p style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, color: t.faint, marginBottom: 6, letterSpacing: ".12em" }}>
+                  TRANSCRIBED
+                </p>
+                <p style={{ fontFamily: "'Space Grotesk',sans-serif", fontSize: 14, color: t.text, lineHeight: 1.7 }}>
+                  "{transcribedText}"
+                </p>
+              </div>
+            )}
+
+            {/* Replay TTS button */}
+            {audioResponse && !voiceAnalyzing && (
+              <Btn t={t} sz="md"
+                icon={<Ic.Zap s={14} />}
+                onClick={() => {
+                  if (audioBlobUrl.current) {
+                    const a = new Audio(audioBlobUrl.current);
+                    a.play().catch(() => {});
+                  }
+                }}
+                style={{ width: "100%", justifyContent: "center" }}
+              >
+                Replay Voice Response
+              </Btn>
+            )}
+
+            {/* CSS keyframes for voice animations */}
+            <style>{`
+              @keyframes voicePulse {
+                0%, 100% { transform: scale(1); opacity: .6; }
+                50% { transform: scale(1.15); opacity: .2; }
+              }
+              @keyframes waveBar {
+                0% { height: 6px; }
+                100% { height: 32px; }
+              }
+            `}</style>
+          </div>
+        )}
+
         {/* Progress indicator */}
         {isLoading && (
           <div style={{ marginTop: 20 }}>
@@ -220,7 +510,7 @@ export default function Factcheck({ t }) {
           <div style={{ textAlign: "center", paddingTop: 100, color: t.faint }}>
             <Ic.Shield s={52} />
             <p style={{ marginTop: 16, fontFamily: "'Space Grotesk',sans-serif", fontSize: 15, lineHeight: 1.7 }}>
-              {tab === "text" ? "Enter a claim and verify\nto see results here" : "Upload an image to extract\ntext and verify it"}
+              {tab === "text" ? "Enter a claim and verify\nto see results here" : tab === "image" ? "Upload an image to extract\ntext and verify it" : "Record a voice claim\nto see results here"}
             </p>
           </div>
         )}
@@ -267,15 +557,15 @@ export default function Factcheck({ t }) {
               </p>
             </TiltCard>
 
-            {/* Extracted text (image tab only) */}
-            {tab === "image" && extractedText && (
+            {/* Extracted / Transcribed text (image & voice tabs) */}
+            {((tab === "image" && extractedText) || (tab === "voice" && transcribedText)) && (
               <TiltCard t={t} style={{
                 padding: 24, marginBottom: 16,
                 opacity: rVis ? 1 : 0, transform: rVis ? "translateY(0)" : "translateY(28px)",
                 transition: "all .9s .15s cubic-bezier(0.16,1,0.3,1)",
               }}>
                 <h4 style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 20, letterSpacing: ".08em", color: t.text, marginBottom: 12 }}>
-                  EXTRACTED TEXT
+                  {tab === "voice" ? "TRANSCRIBED TEXT" : "EXTRACTED TEXT"}
                 </h4>
                 <div style={{
                   background: t.input, border: `1px solid ${t.border}`, borderRadius: 10,
@@ -283,7 +573,7 @@ export default function Factcheck({ t }) {
                   color: t.text, lineHeight: 1.7, whiteSpace: "pre-wrap", maxHeight: 180,
                   overflowY: "auto",
                 }}>
-                  {extractedText}
+                  {tab === "voice" ? transcribedText : extractedText}
                 </div>
               </TiltCard>
             )}

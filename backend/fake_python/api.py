@@ -1,14 +1,20 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
 import os
+import tempfile
+import base64
 import pytesseract
 import cv2
 import numpy as np
-from fastapi import UploadFile, HTTPException
+from fastapi import UploadFile, HTTPException, Form
 from dotenv import load_dotenv
 from search_client import get_evidence
 from verifier_chain import build_verifier_chain
 from fastapi.middleware.cors import CORSMiddleware
+from groq import Groq
+from gtts import gTTS
+
+load_dotenv()
 
 # Python handles the backslashes automatically when reading from the environment
 tesseract_path = os.getenv("TESSERACT_PATH")
@@ -21,6 +27,7 @@ app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],  # restrict later
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -29,17 +36,21 @@ class ClaimRequest(BaseModel):
     claim: str
 
 chain = build_verifier_chain()
+groq_client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 
 @app.post("/fact-check")
 def fact_check(request: ClaimRequest):
-    evidence = get_evidence(request.claim)
+    try:
+        evidence = get_evidence(request.claim)
 
-    result = chain.invoke({
-        "claim": request.claim,
-        "evidence": evidence
-    })
+        result = chain.invoke({
+            "claim": request.claim,
+            "evidence": evidence
+        })
 
-    return result.model_dump()
+        return result.model_dump()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
     
 
 @app.post("/ocr")
@@ -75,6 +86,129 @@ async def extract_text(file: UploadFile):
     
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-        
-    
-    
+
+
+# Map of supported languages: code -> gTTS lang code
+# Whisper auto-detects if language is not specified
+LANG_MAP = {
+    "auto": None,
+    "en": "en", "es": "es", "fr": "fr", "de": "de",
+    "hi": "hi", "pt": "pt", "ru": "ru", "it": "it",
+    "ja": "ja", "ko": "ko", "zh": "zh-CN", "ar": "ar",
+    "tr": "tr", "nl": "nl", "pl": "pl", "sv": "sv",
+    "ta": "ta", "te": "te", "bn": "bn", "ur": "ur",
+}
+
+# Whisper language codes (ISO 639-1) for transcription hinting
+WHISPER_LANGS = {
+    "en": "en", "es": "es", "fr": "fr", "de": "de",
+    "hi": "hi", "pt": "pt", "ru": "ru", "it": "it",
+    "ja": "ja", "ko": "ko", "zh": "zh", "ar": "ar",
+    "tr": "tr", "nl": "nl", "pl": "pl", "sv": "sv",
+    "ta": "ta", "te": "te", "bn": "bn", "ur": "ur",
+}
+
+
+@app.post("/voice-check")
+async def voice_check(file: UploadFile, language: str = Form(default="auto")):
+    """Accept audio, transcribe with Groq Whisper, fact-check, return TTS audio.
+    Supports multilingual: pass language code (e.g. 'hi', 'es') or 'auto' for detection."""
+    try:
+        # --- Determine file extension from content type or filename ---
+        ext_map = {
+            "audio/webm": ".webm",
+            "audio/ogg": ".ogg",
+            "audio/mp4": ".mp4",
+            "audio/mpeg": ".mp3",
+            "audio/wav": ".wav",
+            "audio/x-wav": ".wav",
+            "audio/mp3": ".mp3",
+            "video/webm": ".webm",
+        }
+        ct = (file.content_type or "").split(";")[0].strip().lower()
+        ext = ext_map.get(ct, "")
+        if not ext and file.filename:
+            ext = os.path.splitext(file.filename)[-1] or ".webm"
+        if not ext:
+            ext = ".webm"
+
+        # --- Save uploaded audio to a temp file ---
+        audio_bytes = await file.read()
+        tmp = tempfile.NamedTemporaryFile(suffix=ext, delete=False)
+        tmp.write(audio_bytes)
+        tmp.close()
+
+        # --- Transcribe with Groq Whisper ---
+        lang_code = language.strip().lower() if language else "auto"
+        whisper_kwargs = {
+            "model": "whisper-large-v3",
+            "response_format": "verbose_json",  # gives us detected language
+        }
+        # If user picked a specific language, hint Whisper for better accuracy
+        if lang_code != "auto" and lang_code in WHISPER_LANGS:
+            whisper_kwargs["language"] = WHISPER_LANGS[lang_code]
+
+        with open(tmp.name, "rb") as f:
+            whisper_kwargs["file"] = (os.path.basename(tmp.name), f)
+            transcription = groq_client.audio.transcriptions.create(**whisper_kwargs)
+        os.unlink(tmp.name)
+
+        # Extract text and detected language from response
+        if isinstance(transcription, str):
+            transcribed_text = transcription.strip()
+            detected_lang = lang_code if lang_code != "auto" else "en"
+        else:
+            transcribed_text = transcription.text.strip()
+            detected_lang = getattr(transcription, "language", None) or (lang_code if lang_code != "auto" else "en")
+
+        if not transcribed_text:
+            raise HTTPException(status_code=400, detail="Could not transcribe any speech from the audio.")
+
+        # --- Fact-check the transcribed claim ---
+        evidence = get_evidence(transcribed_text)
+        result = chain.invoke({
+            "claim": transcribed_text,
+            "evidence": evidence,
+        })
+        result_dict = result.model_dump()
+
+        # --- Generate TTS audio response in the right language ---
+        speech_text = f"{result_dict['verdict']}. {result_dict['explanation']}"
+
+        # Resolve gTTS language: use user-selected, then detected, fallback to 'en'
+        tts_lang = "en"
+        if lang_code != "auto" and lang_code in LANG_MAP and LANG_MAP[lang_code]:
+            tts_lang = LANG_MAP[lang_code]
+        elif detected_lang and detected_lang in LANG_MAP and LANG_MAP[detected_lang]:
+            tts_lang = LANG_MAP[detected_lang]
+        elif detected_lang:
+            # Try using the raw detected lang code directly with gTTS
+            tts_lang = detected_lang
+
+        try:
+            tts = gTTS(text=speech_text, lang=tts_lang)
+        except Exception:
+            # Fallback to English if the language isn't supported by gTTS
+            tts = gTTS(text=speech_text, lang="en")
+            tts_lang = "en"
+
+        tts_tmp = tempfile.NamedTemporaryFile(suffix=".mp3", delete=False)
+        tts.save(tts_tmp.name)
+        tts_tmp.close()
+
+        with open(tts_tmp.name, "rb") as af:
+            audio_b64 = base64.b64encode(af.read()).decode("utf-8")
+        os.unlink(tts_tmp.name)
+
+        return {
+            "transcribed_text": transcribed_text,
+            "result": result_dict,
+            "audio_response": audio_b64,
+            "detected_language": detected_lang,
+            "tts_language": tts_lang,
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

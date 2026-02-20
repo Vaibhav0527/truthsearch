@@ -20,6 +20,10 @@ pydantic>=2.5.0
 # Environment & Configuration
 python-dotenv>=1.0.0
 
+# Voice: Groq Whisper STT + gTTS
+groq>=0.4.0
+gTTS>=2.3.0
+
 # Search (Optional - if using Tavily)
 # langchain-tavily>=0.1.0
 # or for Google Search:

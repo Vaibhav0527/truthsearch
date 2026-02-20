@@ -9,5 +9,3 @@ def build_verifier_chain():
     structured_llm = llm.with_structured_output(FactCheckResult)
     prompt = ChatPromptTemplate.from_template(VERIFY_PROMPT)
     return prompt | structured_llm
-
-

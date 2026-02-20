@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 class FactCheckResult(BaseModel):
     verdict: str = Field(
@@ -14,5 +14,9 @@ class FactCheckResult(BaseModel):
         description="List of URLs used for verification"
     )
 
-
-
+    @field_validator("confidence", mode="before")
+    @classmethod
+    def coerce_confidence(cls, v):
+        if isinstance(v, str):
+            return int(v)
+        return v

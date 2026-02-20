@@ -20,5 +20,3 @@ def get_evidence(query: str) -> str:
         )
 
     return "\n---\n".join(blocks)
-
-
