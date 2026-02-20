@@ -8,6 +8,7 @@ import { ClipLoader } from "react-spinners";
 import { useDispatch } from "react-redux";
 import { setUserData } from "../redux/userSlice";
 import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
+import Footer from "../components/Footer";
 
 const SignIn = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -194,6 +195,8 @@ const SignIn = () => {
 
         </div>
       </div>
+
+      <Footer />
     </div>
   );
 };

@@ -5,10 +5,19 @@ import { Route, Routes, Navigate, useNavigate, useLocation } from "react-router-
 import SignUp from "../pages/SignUp";
 import SignIn from "../pages/SignIn";
 import LandingPage from "../pages/LandingPage";
-import WorkspacePage from "../pages/WorkspacePage";
-import ImagePage from "../pages/ImagePage";
-import VoicePage from "../pages/VoicePage";
+import TextCheckPage from "../pages/TextCheckPage";
+import ImageCheckPage from "../pages/ImageCheckPage";
+import VoiceCheckPage from "../pages/VoiceCheckPage";
+import AIDetectPage from "../pages/AIDetectPage";
 import HistoryPage from "../pages/HistoryPage";
+import DocsPage from "../pages/DocsPage";
+import ApiReferencePage from "../pages/ApiReferencePage";
+import BlogPage from "../pages/BlogPage";
+import StatusPage from "../pages/StatusPage";
+import AboutPage from "../pages/AboutPage";
+import PrivacyPage from "../pages/PrivacyPage";
+import TermsPage from "../pages/TermsPage";
+import ContactPage from "../pages/ContactPage";
 import Loader from "../components/Loader";
 import Navbar from "../components/Navbar";
 import FullMenu from "../components/FullMenu";
@@ -19,11 +28,40 @@ import ScrollProg from "../components/ScrollProg";
 import PageWipe from "../components/PageWipe";
 import useGetCurrentUser from "../hooks/useGetCurrentUser";
 import { T, GLOBAL_STYLES } from "../constants";
-import Factcheck from "../pages/Factcheck";
 
 // Map route paths to page IDs used by Navbar/FullMenu
-const routeToPage = { "/": "landing", "/workspace": "workspace", "/image": "image", "/voice": "voice", "/history": "history", "/factcheck": "factcheck" };
-const pageToRoute = { landing: "/", workspace: "/workspace", image: "/image", voice: "/voice", history: "/history", factcheck: "/factcheck" };
+const routeToPage = {
+  "/": "landing",
+  "/factcheck": "factcheck",
+  "/image-check": "imagecheck",
+  "/voice-check": "voicecheck",
+  "/ai-detect": "aidetect",
+  "/history": "history",
+  "/docs": "docs",
+  "/api-reference": "apireference",
+  "/blog": "blog",
+  "/status": "status",
+  "/about": "about",
+  "/privacy": "privacy",
+  "/terms": "terms",
+  "/contact": "contact",
+};
+const pageToRoute = {
+  landing: "/",
+  factcheck: "/factcheck",
+  imagecheck: "/image-check",
+  voicecheck: "/voice-check",
+  aidetect: "/ai-detect",
+  history: "/history",
+  docs: "/docs",
+  apireference: "/api-reference",
+  blog: "/blog",
+  status: "/status",
+  about: "/about",
+  privacy: "/privacy",
+  terms: "/terms",
+  contact: "/contact",
+};
 
 const App = () => {
   
@@ -101,10 +139,19 @@ const App = () => {
           <Route path="/" element={<LandingPage t={t} setPage={setPage} isDark={isDark} />} />
           <Route path="/signup" element={!userData ? <SignUp /> : <Navigate to="/" />} />
           <Route path="/login" element={!userData ? <SignIn /> : <Navigate to="/" />} />
-          <Route path="/workspace" element={userData ? <WorkspacePage t={t} setPage={setPage} isDark={isDark} /> : <Navigate to="/login" />} />
-          <Route path="/image" element={userData ? <ImagePage t={t} setPage={setPage} isDark={isDark} /> : <Navigate to="/login" />} />
-          <Route path="/factcheck" element={ <Factcheck t={t} setPage={setPage} isDark={isDark}  />} />
-          <Route path="/history" element={ <HistoryPage t={t} setPage={setPage} isDark={isDark} />  } />
+          <Route path="/factcheck" element={<TextCheckPage t={t} setPage={setPage} isDark={isDark} />} />
+          <Route path="/image-check" element={<ImageCheckPage t={t} setPage={setPage} isDark={isDark} />} />
+          <Route path="/voice-check" element={<VoiceCheckPage t={t} setPage={setPage} isDark={isDark} />} />
+          <Route path="/ai-detect" element={<AIDetectPage t={t} setPage={setPage} isDark={isDark} />} />
+          <Route path="/history" element={<HistoryPage t={t} setPage={setPage} isDark={isDark} />} />
+          <Route path="/docs" element={<DocsPage t={t} setPage={setPage} isDark={isDark} />} />
+          <Route path="/api-reference" element={<ApiReferencePage t={t} setPage={setPage} isDark={isDark} />} />
+          <Route path="/blog" element={<BlogPage t={t} setPage={setPage} isDark={isDark} />} />
+          <Route path="/status" element={<StatusPage t={t} setPage={setPage} isDark={isDark} />} />
+          <Route path="/about" element={<AboutPage t={t} setPage={setPage} isDark={isDark} />} />
+          <Route path="/privacy" element={<PrivacyPage t={t} setPage={setPage} isDark={isDark} />} />
+          <Route path="/terms" element={<TermsPage t={t} setPage={setPage} isDark={isDark} />} />
+          <Route path="/contact" element={<ContactPage t={t} setPage={setPage} isDark={isDark} />} />
         </Routes>
       )}
     </div>

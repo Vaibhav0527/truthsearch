@@ -409,7 +409,7 @@ export default function Factcheck({ t }) {
   };
 
   return (
-    <div style={{ paddingTop: 68, minHeight: "100vh", display: "grid", gridTemplateColumns: "1fr 1fr", position: "relative", zIndex: 1 }}>
+    <div style={{ paddingTop: 84, minHeight: "100vh", display: "grid", gridTemplateColumns: "1fr 1fr", position: "relative", zIndex: 1 }}>
 
       {/* ───── LEFT: INPUT PANEL ───── */}
       <div style={{ borderRight: `1px solid ${t.line}`, padding: "52px 48px", overflowY: "auto", maxHeight: "calc(100vh - 68px)" }}>

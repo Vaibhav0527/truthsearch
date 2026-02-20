@@ -24,7 +24,7 @@ export default function ImagePage({ t }) {
   const inds = [{ l: "Pixel Authenticity", s: 72 }, { l: "Metadata Integrity", s: 85 }, { l: "AI Generation Prob.", s: 18 }, { l: "Clone Detection", s: 62 }, { l: "Lighting Consistency", s: 79 }];
 
   return (
-    <div ref={pRef} style={{ paddingTop: 68, minHeight: "100vh", padding: "90px 60px 80px", position: "relative", zIndex: 1 }}>
+    <div ref={pRef} style={{ paddingTop: 84, minHeight: "100vh", padding: "90px 60px 80px", position: "relative", zIndex: 1 }}>
       <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: "clamp(48px,7vw,80px)", letterSpacing: ".03em", color: t.text, lineHeight: .95, marginBottom: 10, transform: pVis ? "translateY(0)" : "translateY(40px)", opacity: pVis ? 1 : 0, transition: "all 1s .05s cubic-bezier(0.16,1,0.3,1)" }}>Image Verification</div>
       <p style={{ fontFamily: "'Space Grotesk',sans-serif", color: t.muted, fontSize: 15, marginBottom: 44, transform: pVis ? "translateY(0)" : "translateY(30px)", opacity: pVis ? 1 : 0, transition: "all 1s .12s cubic-bezier(0.16,1,0.3,1)" }}>Detect manipulation, AI generation, and metadata anomalies</p>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 28 }}>

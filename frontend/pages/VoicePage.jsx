@@ -23,7 +23,7 @@ export default function VoicePage({ t }) {
   const bars = [...Array(32)].map((_, i) => ({ h: Math.random() * 75 + 12, d: i * .055 }));
 
   return (
-    <div ref={vRef} style={{ paddingTop: 68, minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "80px 60px", position: "relative", zIndex: 1 }}>
+    <div ref={vRef} style={{ paddingTop: 84, minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "80px 60px", position: "relative", zIndex: 1 }}>
       <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: "clamp(48px,7vw,80px)", letterSpacing: ".03em", color: t.text, lineHeight: .95, marginBottom: 10, textAlign: "center", transform: vVis ? "translateY(0)" : "translateY(40px)", opacity: vVis ? 1 : 0, transition: "all 1s cubic-bezier(0.16,1,0.3,1)" }}>Voice Analysis</div>
       <p style={{ fontFamily: "'Space Grotesk',sans-serif", color: t.muted, fontSize: 15, marginBottom: 56, textAlign: "center", transform: vVis ? "translateY(0)" : "translateY(30px)", opacity: vVis ? 1 : 0, transition: "all 1s .08s cubic-bezier(0.16,1,0.3,1)" }}>Detect deepfakes, emotional manipulation, and speaker credibility</p>
       <TiltCard t={t} glow style={{ padding: "56px 52px", maxWidth: 560, width: "100%", textAlign: "center", opacity: vVis ? 1 : 0, transform: vVis ? "translateY(0)" : "translateY(36px)", transition: "all 1s .16s cubic-bezier(0.16,1,0.3,1)" }}>

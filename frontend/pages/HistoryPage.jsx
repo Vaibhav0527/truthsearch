@@ -7,6 +7,7 @@ import TiltCard from "../components/TiltCard";
 import Btn from "../components/Btn";
 import TrustGauge from "../components/TrustGauge";
 import { backendUrl } from "../src/config";
+import Footer from "../components/Footer";
 
 const API = backendUrl;
 
@@ -304,7 +305,7 @@ function EmptyState({ t }) {
 }
 
 // ─── MAIN: HISTORY PAGE ───────────────────────────────────────────────────────
-export default function HistoryPage({ t }) {
+export default function HistoryPage({ t, setPage }) {
   const [hRef, hVis] = useReveal(0.04);
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -372,7 +373,7 @@ export default function HistoryPage({ t }) {
   ];
 
   return (
-    <div style={{ paddingTop: 68, minHeight: "100vh", padding: "90px 60px", position: "relative", zIndex: 1 }}>
+    <div style={{ paddingTop: 84, minHeight: "100vh", padding: "90px 60px", position: "relative", zIndex: 1 }}>
 
       {/* MODAL */}
       <DetailModal
@@ -508,6 +509,8 @@ export default function HistoryPage({ t }) {
           >Next</Btn>
         </div>
       )}
+
+      <Footer t={t} setPage={setPage} />
     </div>
   );
 }

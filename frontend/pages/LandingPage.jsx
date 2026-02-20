@@ -7,6 +7,7 @@ import Marquee from "../components/Marquee";
 import TiltCard from "../components/TiltCard";
 import Btn from "../components/Btn";
 import WebGLCard from "../components/WebGLCard";
+import Footer from "../components/Footer";
 
 // ─── FEATURE CELL ─────────────────────────────────────────────────────────────
 function FeatureCell({ f, i, total, t, fVis }) {
@@ -44,7 +45,7 @@ export default function LandingPage({ setPage, t, isDark }) {
   const stats = [{ v: "98.7%", l: "ACCURACY" }, { v: "2.1s", l: "AVG TIME" }, { v: "140M+", l: "CLAIMS" }, { v: "190+", l: "LANGUAGES" }];
 
   return (
-    <div style={{ paddingTop: 68, minHeight: "100vh", position: "relative", zIndex: 1 }}>
+    <div style={{ paddingTop: 84, minHeight: "100vh", position: "relative", zIndex: 1 }}>
 
       {/* ══ HERO ══ */}
       <section ref={ref} style={{ minHeight: "100vh", display: "flex", flexDirection: "column", justifyContent: "center", padding: "120px 60px 80px", position: "relative", overflow: "hidden" }}>
@@ -123,9 +124,9 @@ export default function LandingPage({ setPage, t, isDark }) {
 
             <RevealLine inView={vis} delay={.58}>
               <div style={{ display: "flex", gap: 14, flexWrap: "wrap", marginBottom: 36 }}>
-                <Btn t={t} sz="lg" icon={<Ic.Search s={16} />} onClick={() => setPage("workspace")}>Analyze Text</Btn>
-                <Btn t={t} v="secondary" sz="lg" icon={<Ic.Mic s={16} />} onClick={() => setPage("voice")}>Voice</Btn>
-                <Btn t={t} v="secondary" sz="lg" icon={<Ic.Img s={16} />} onClick={() => setPage("image")}>Image</Btn>
+                <Btn t={t} sz="lg" icon={<Ic.Search s={16} />} onClick={() => setPage("factcheck")}>Analyze Text</Btn>
+                <Btn t={t} v="secondary" sz="lg" icon={<Ic.Mic s={16} />} onClick={() => setPage("voicecheck")}>Voice</Btn>
+                <Btn t={t} v="secondary" sz="lg" icon={<Ic.Img s={16} />} onClick={() => setPage("imagecheck")}>Image</Btn>
               </div>
             </RevealLine>
 
@@ -213,9 +214,11 @@ export default function LandingPage({ setPage, t, isDark }) {
         <TiltCard t={t} glow style={{ maxWidth: 600, padding: "60px 52px", margin: "0 auto", textAlign: "center", background: isDark ? "linear-gradient(135deg,rgba(181,123,255,.09),rgba(109,40,217,.05))" : "linear-gradient(135deg,rgba(109,40,217,.07),rgba(181,123,255,.04))" }}>
           <h2 style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 60, letterSpacing: ".04em", color: t.text, lineHeight: .95, marginBottom: 14 }}>Start detecting<br />misinformation</h2>
           <p style={{ fontFamily: "'Space Grotesk',sans-serif", color: t.muted, fontSize: 15, marginBottom: 32 }}>Free to try. No credit card. 10 analyses per day.</p>
-          <Btn t={t} sz="lg" onClick={() => setPage("workspace")} icon={<Ic.Arr s={15} />}>Open Workspace</Btn>
+          <Btn t={t} sz="lg" onClick={() => setPage("factcheck")} icon={<Ic.Arr s={15} />}>Start Fact Checking</Btn>
         </TiltCard>
       </section>
+
+      <Footer t={t} setPage={setPage} />
     </div>
   );
 }

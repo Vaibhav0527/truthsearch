@@ -37,7 +37,7 @@ export default function WorkspacePage({ t }) {
   const steps = ["Cross-referencing sources", "Semantic analysis", "Bias detection", "Fact verification"];
 
   return (
-    <div style={{ paddingTop: 68, minHeight: "100vh", display: "grid", gridTemplateColumns: "1fr 1fr", position: "relative", zIndex: 1 }}>
+    <div style={{ paddingTop: 84, minHeight: "100vh", display: "grid", gridTemplateColumns: "1fr 1fr", position: "relative", zIndex: 1 }}>
       <div style={{ borderRight: `1px solid ${t.line}`, padding: "52px 48px", overflowY: "auto", maxHeight: "calc(100vh - 68px)" }}>
         <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 48, letterSpacing: ".03em", color: t.text, lineHeight: .95, marginBottom: 8 }}>Analysis<br />Workspace</div>
         <p style={{ fontFamily: "'Space Grotesk',sans-serif", color: t.muted, fontSize: 14, marginBottom: 32 }}>Submit content for AI-powered misinformation detection</p>

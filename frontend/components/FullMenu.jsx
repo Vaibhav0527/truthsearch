@@ -6,10 +6,10 @@ import ScrambleTxt from "./ScrambleTxt";
 export default function FullMenu({ open, onClose, page, setPage, isDark, toggleTheme, t }) {
   const items = [
     { id: "landing", label: "HOME", num: "01" },
-    { id: "workspace", label: "ANALYZE", num: "02" },
-    { id: "image", label: "IMAGE", num: "03" },
-    { id: "voice", label: "VOICE", num: "04" },
-    { id: "factcheck", label: "FACT CHECK", num: "05" },
+    { id: "factcheck", label: "TEXT CHECK", num: "02" },
+    { id: "imagecheck", label: "IMAGE OCR", num: "03" },
+    { id: "voicecheck", label: "VOICE CHECK", num: "04" },
+    { id: "aidetect", label: "AI DETECT", num: "05" },
     { id: "history", label: "HISTORY", num: "06" },
   ];
   const [hovIdx, setHovIdx] = useState(null);
