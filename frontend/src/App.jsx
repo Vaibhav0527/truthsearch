@@ -19,8 +19,8 @@ const App = () => {
         element={true ? <SignUp /> : <Navigate to="/" />}
       />
       <Route
-        path="/signin"
-        element={!userData ? <SignIn /> : <Navigate to="/" />}
+        path="/login"
+        element={true ? <SignIn /> : <Navigate to="/" />}
       />
     </Routes>
   );

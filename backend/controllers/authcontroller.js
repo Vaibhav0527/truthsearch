@@ -28,8 +28,8 @@ const signup = async (req, res) => {
     }
 
     // hashing user password
-    const salt = await bycrypt.genSalt(10);
-    const hashedPassword = await bycrypt.hash(password, salt);
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
 
     const userData = {
       fullname,
@@ -53,13 +53,13 @@ const signup = async (req, res) => {
 const signin= async (req, res) => {
   try {
     const { email, password } = req.body;
-    const user = await userModel.findOne({ email });
+    const user = await User.findOne({ email });
 
     if (!user) {
       return res.json({ success: false, message: "User does not exist" });
     }
 
-    const isMatch = await bycrypt.compare(password, user.password);
+    const isMatch = await bcrypt.compare(password, user.password);
 
     if (isMatch) {
       const token = jwt.sign({ _id: user._id }, process.env.JWT_SECRET);
