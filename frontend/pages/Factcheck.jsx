@@ -80,6 +80,14 @@ export default function Factcheck({ t }) {
   const timerRef = useRef(null);
   const audioBlobUrl = useRef(null);                            // for reliable replay
 
+  // AI Detect state
+  const [aiImg, setAiImg] = useState(null);
+  const [aiImgFile, setAiImgFile] = useState(null);
+  const [aiAnalyzing, setAiAnalyzing] = useState(false);
+  const [aiResult, setAiResult] = useState(null);
+  const [aiError, setAiError] = useState(null);
+  const aiFileRef = useRef(null);
+
   const [rRef, rVis] = useReveal(0.04);
 
   // ── Text fact-check ──
@@ -215,9 +223,33 @@ export default function Factcheck({ t }) {
 
   const fmtTime = (s) => `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
 
-  const activeResult = tab === "text" ? result : tab === "image" ? imgResult : voiceResult;
-  const isLoading = tab === "text" ? analyzing : tab === "image" ? imgAnalyzing : voiceAnalyzing;
-  const activeError = tab === "text" ? error : tab === "image" ? imgError : voiceError;
+  // ── AI Image Detect ──
+  const handleAiFile = (e) => {
+    const f = e.target.files[0];
+    if (f) { setAiImg(URL.createObjectURL(f)); setAiImgFile(f); setAiResult(null); setAiError(null); }
+  };
+
+  const runAiDetect = async () => {
+    if (!aiImgFile) return;
+    setAiAnalyzing(true); setAiResult(null); setAiError(null);
+    try {
+      const fd = new FormData();
+      fd.append("file", aiImgFile);
+      const { data } = await axios.post(`${API}/detect-ai-image`, fd, {
+        headers: { "Content-Type": "multipart/form-data" },
+        timeout: 120000,
+      });
+      setAiResult(data);
+    } catch (err) {
+      setAiError(err.response?.data?.detail || err.message || "AI detection failed");
+    } finally {
+      setAiAnalyzing(false);
+    }
+  };
+
+  const activeResult = tab === "text" ? result : tab === "image" ? imgResult : tab === "voice" ? voiceResult : aiResult;
+  const isLoading = tab === "text" ? analyzing : tab === "image" ? imgAnalyzing : tab === "voice" ? voiceAnalyzing : aiAnalyzing;
+  const activeError = tab === "text" ? error : tab === "image" ? imgError : tab === "voice" ? voiceError : aiError;
 
   const steps = ["Searching evidence", "Cross-referencing", "AI verification", "Building verdict"];
 
@@ -235,7 +267,7 @@ export default function Factcheck({ t }) {
 
         {/* Tabs */}
         <div style={{ display: "flex", gap: 6, marginBottom: 28 }}>
-          {[{ id: "text", label: "Text Claim", icon: <Ic.Search s={14} /> }, { id: "image", label: "Image OCR", icon: <Ic.Img s={14} /> }, { id: "voice", label: "Voice", icon: <Ic.Mic s={14} /> }].map(tb => (
+          {[{ id: "text", label: "Text Claim", icon: <Ic.Search s={14} /> }, { id: "image", label: "Image OCR", icon: <Ic.Img s={14} /> }, { id: "voice", label: "Voice", icon: <Ic.Mic s={14} /> }, { id: "ai", label: "AI Detect", icon: <Ic.Eye s={14} /> }].map(tb => (
             <button
               key={tb.id}
               onClick={() => setTab(tb.id)}
@@ -467,6 +499,41 @@ export default function Factcheck({ t }) {
           </div>
         )}
 
+        {/* ── AI DETECT TAB ── */}
+        {tab === "ai" && (
+          <>
+            <div
+              onClick={() => aiFileRef.current.click()} data-mag
+              style={{
+                borderRadius: 16, border: `2px dashed ${aiImg ? t.accent + "55" : t.border}`,
+                minHeight: 220, display: "flex", flexDirection: "column", alignItems: "center",
+                justifyContent: "center", cursor: "pointer", overflow: "hidden",
+                background: aiImg ? "transparent" : t.card, transition: "all .3s",
+              }}
+            >
+              {aiImg
+                ? <img src={aiImg} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: 14 }} />
+                : (
+                  <>
+                    <div style={{ color: t.faint, marginBottom: 12 }}><Ic.Eye s={44} /></div>
+                    <p style={{ fontFamily: "'Space Grotesk',sans-serif", color: t.muted, fontSize: 14, fontWeight: 600 }}>Click to upload an image</p>
+                    <p style={{ fontFamily: "'DM Mono',monospace", color: t.faint, fontSize: 10, marginTop: 4, letterSpacing: ".12em" }}>JPG, PNG, WebP — AI vs Real forensic analysis</p>
+                  </>
+                )
+              }
+            </div>
+            <input ref={aiFileRef} type="file" accept="image/*" style={{ display: "none" }} onChange={handleAiFile} />
+            {aiImg && (
+              <Btn t={t} sz="lg" icon={<Ic.Eye s={16} />} onClick={runAiDetect}
+                disabled={aiAnalyzing}
+                style={{ width: "100%", justifyContent: "center", marginTop: 14 }}
+              >
+                {aiAnalyzing ? "Analyzing Forensics…" : "Detect AI Image"}
+              </Btn>
+            )}
+          </>
+        )}
+
         {/* Progress indicator */}
         {isLoading && (
           <div style={{ marginTop: 20 }}>
@@ -510,13 +577,13 @@ export default function Factcheck({ t }) {
           <div style={{ textAlign: "center", paddingTop: 100, color: t.faint }}>
             <Ic.Shield s={52} />
             <p style={{ marginTop: 16, fontFamily: "'Space Grotesk',sans-serif", fontSize: 15, lineHeight: 1.7 }}>
-              {tab === "text" ? "Enter a claim and verify\nto see results here" : tab === "image" ? "Upload an image to extract\ntext and verify it" : "Record a voice claim\nto see results here"}
+              {tab === "text" ? "Enter a claim and verify\nto see results here" : tab === "image" ? "Upload an image to extract\ntext and verify it" : tab === "voice" ? "Record a voice claim\nto see results here" : "Upload an image to detect\nif it's AI-generated or real"}
             </p>
           </div>
         )}
 
         {/* Results */}
-        {activeResult && (
+        {activeResult && tab !== "ai" && (
           <div>
             {/* Trust Gauge */}
             <TiltCard t={t} glow style={{
@@ -604,6 +671,100 @@ export default function Factcheck({ t }) {
                     {src}
                   </a>
                 ))}
+              </TiltCard>
+            )}
+          </div>
+        )}
+
+        {/* AI Detection Results */}
+        {tab === "ai" && aiResult && (
+          <div>
+            {/* Confidence Gauge */}
+            <TiltCard t={t} glow style={{
+              padding: 28, marginBottom: 16,
+              opacity: rVis ? 1 : 0, transform: rVis ? "translateY(0)" : "translateY(28px)",
+              transition: "all .9s cubic-bezier(0.16,1,0.3,1)",
+            }}>
+              <TrustGauge score={aiResult.confidence_percentage ?? 0} t={t} />
+            </TiltCard>
+
+            {/* Verdict */}
+            <TiltCard t={t} style={{
+              padding: 24, marginBottom: 16,
+              opacity: rVis ? 1 : 0, transform: rVis ? "translateY(0)" : "translateY(28px)",
+              transition: "all .9s .1s cubic-bezier(0.16,1,0.3,1)",
+            }}>
+              <h4 style={{
+                fontFamily: "'Bebas Neue',sans-serif", fontSize: 20, letterSpacing: ".08em",
+                color: t.text, marginBottom: 16, display: "flex", alignItems: "center", gap: 10,
+              }}>
+                VERDICT
+                <span style={{
+                  padding: "3px 12px", borderRadius: 20, fontSize: 11, fontWeight: 700,
+                  fontFamily: "'DM Mono',monospace", letterSpacing: ".06em",
+                  background: aiResult.verdict === "AI-Generated" ? t.lo + "15" : aiResult.verdict === "Real Photograph" ? t.hi + "15" : t.mid + "15",
+                  color: aiResult.verdict === "AI-Generated" ? t.lo : aiResult.verdict === "Real Photograph" ? t.hi : t.mid,
+                  border: `1px solid ${aiResult.verdict === "AI-Generated" ? t.lo + "35" : aiResult.verdict === "Real Photograph" ? t.hi + "35" : t.mid + "35"}`,
+                }}>
+                  {aiResult.verdict?.toUpperCase()}
+                </span>
+              </h4>
+              <p style={{
+                fontFamily: "'Space Grotesk',sans-serif", fontSize: 14, color: t.muted,
+                lineHeight: 1.7, whiteSpace: "pre-wrap",
+              }}>
+                {aiResult.detailed_reasoning}
+              </p>
+            </TiltCard>
+
+            {/* Visual Inconsistencies */}
+            {aiResult.visual_inconsistencies && aiResult.visual_inconsistencies.length > 0 && (
+              <TiltCard t={t} style={{
+                padding: 24, marginBottom: 16,
+                opacity: rVis ? 1 : 0, transform: rVis ? "translateY(0)" : "translateY(28px)",
+                transition: "all .9s .15s cubic-bezier(0.16,1,0.3,1)",
+              }}>
+                <h4 style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 20, letterSpacing: ".08em", color: t.text, marginBottom: 16 }}>
+                  VISUAL INCONSISTENCIES
+                </h4>
+                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                  {aiResult.visual_inconsistencies.map((item, i) => (
+                    <div key={i} style={{
+                      display: "flex", alignItems: "flex-start", gap: 10,
+                      padding: "10px 14px", borderRadius: 10,
+                      background: t.lo + "08", border: `1px solid ${t.lo}20`,
+                    }}>
+                      <Ic.Alert s={14} />
+                      <span style={{ fontFamily: "'Space Grotesk',sans-serif", fontSize: 13, color: t.text, lineHeight: 1.6 }}>
+                        {item}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </TiltCard>
+            )}
+
+            {/* AI Generation Indicators */}
+            {aiResult.ai_generation_indicators && aiResult.ai_generation_indicators.length > 0 && (
+              <TiltCard t={t} style={{
+                padding: 24,
+                opacity: rVis ? 1 : 0, transform: rVis ? "translateY(0)" : "translateY(28px)",
+                transition: "all .9s .2s cubic-bezier(0.16,1,0.3,1)",
+              }}>
+                <h4 style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 20, letterSpacing: ".08em", color: t.text, marginBottom: 16 }}>
+                  AI GENERATION INDICATORS
+                </h4>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                  {aiResult.ai_generation_indicators.map((ind, i) => (
+                    <span key={i} style={{
+                      fontFamily: "'DM Mono',monospace", fontSize: 11, padding: "6px 14px", borderRadius: 20,
+                      letterSpacing: ".04em", lineHeight: 1.5,
+                      color: t.accent, background: t.accent + "10", border: `1px solid ${t.accent}30`,
+                    }}>
+                      {ind}
+                    </span>
+                  ))}
+                </div>
               </TiltCard>
             )}
           </div>

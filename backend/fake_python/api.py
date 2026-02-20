@@ -12,6 +12,7 @@ from search_client import get_evidence
 from verifier_chain import build_verifier_chain
 from fastapi.middleware.cors import CORSMiddleware
 from groq import Groq
+from openai import OpenAI
 from gtts import gTTS
 from pathlib import Path
 
@@ -39,6 +40,10 @@ class ClaimRequest(BaseModel):
 
 chain = build_verifier_chain()
 groq_client = Groq(api_key=os.getenv("GROQ_API_KEY"))
+openai_client = OpenAI(
+    api_key=os.getenv("OPENAI_API_KEY"),
+    base_url="https://models.inference.ai.azure.com",
+)
 
 @app.post("/fact-check")
 def fact_check(request: ClaimRequest):
@@ -212,5 +217,85 @@ async def voice_check(file: UploadFile, language: str = Form(default="auto")):
 
     except HTTPException:
         raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ── AI Image Detection ────────────────────────────────────────────────────────
+IMAGE_AI_DETECTION_PROMPT = """You are an expert digital forensics analyst specializing in AI-generated image detection.
+Analyze the provided image and determine whether it is AI-generated or a real photograph.
+
+Examine these forensic criteria carefully:
+1. LIGHTING & SHADOWS - Check for inconsistent light sources, impossible shadow angles, or diffused shadows that don't match the scene geometry.
+2. ANATOMY & PROPORTIONS - Look for malformed hands/fingers, asymmetric facial features, extra or missing limbs, unnatural body proportions.
+3. TEXT & SYMBOLS - AI often produces garbled, misspelled, or nonsensical text in signs, labels, or watermarks.
+4. REFLECTIONS & REFRACTIONS - Reflections in eyes, mirrors, water, or glass that don't match the scene.
+5. EDGES & BOUNDARIES - Blurry or smeared boundaries between objects, hair merging with background, unnatural skin-to-clothing transitions.
+6. TEXTURES & PATTERNS - Repeating or overly smooth textures, skin that looks plastic-like, fabric patterns that warp unnaturally.
+7. SYMMETRY ARTIFACTS - Overly perfect or imperfect symmetry in faces, architecture, or repeating patterns.
+8. DIFFUSION / GAN ARTIFACTS - Checkerboard patterns at pixel level, spectral anomalies, or "AI glow" / over-sharpened look typical of certain generators.
+9. BACKGROUND COHERENCE - Background elements that don't make logical sense, impossible architecture, semantic incoherence.
+10. METADATA CLUES - If visible: watermarks, signatures of known generators (Midjourney, DALL-E, Stable Diffusion patterns).
+
+You MUST respond with valid JSON only, no extra text. Use this exact structure:
+{
+  "verdict": "AI-Generated" or "Real Photograph" or "Uncertain",
+  "confidence_percentage": <integer 0-100>,
+  "detailed_reasoning": "<2-4 sentence summary of your analysis>",
+  "visual_inconsistencies": ["<specific issue 1>", "<specific issue 2>", ...],
+  "ai_generation_indicators": ["<indicator 1>", "<indicator 2>", ...]
+}
+
+If the image appears to be a real photograph, "visual_inconsistencies" should list any minor observations and "ai_generation_indicators" should be an empty array or list reasons it appears authentic.
+Respond ONLY with the JSON object."""
+
+@app.post("/detect-ai-image")
+async def detect_ai_image(file: UploadFile):
+
+    if not file.content_type or not file.content_type.startswith("image/"):
+        raise HTTPException(status_code=400, detail="File must be an image")
+
+    try:
+        image_bytes = await file.read()
+        img_b64 = base64.b64encode(image_bytes).decode("utf-8")
+        mime = file.content_type or "image/jpeg"
+
+        response = openai_client.chat.completions.create(
+            model="gpt-4o",
+            temperature=0.1,
+            max_tokens=1000,
+            messages=[
+                {
+                    "role": "user",
+                    "content": [
+                        {"type": "text", "text": IMAGE_AI_DETECTION_PROMPT},
+                        {
+                            "type": "image_url",
+                            "image_url": {
+                                "url": f"data:{mime};base64,{img_b64}"
+                            }
+                        }
+                    ]
+                }
+            ]
+        )
+
+        raw = response.choices[0].message.content.strip()
+
+        import json, re
+        match = re.search(r"\{[\s\S]*\}", raw)
+        if not match:
+            raise ValueError("Invalid JSON returned from model")
+
+        parsed = json.loads(match.group())
+
+        return {
+            "verdict": parsed.get("verdict", "Uncertain"),
+            "confidence_percentage": int(parsed.get("confidence_percentage", 50)),
+            "detailed_reasoning": parsed.get("detailed_reasoning", ""),
+            "visual_inconsistencies": parsed.get("visual_inconsistencies", []),
+            "ai_generation_indicators": parsed.get("ai_generation_indicators", []),
+        }
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
