@@ -1,9 +1,10 @@
 from dotenv import load_dotenv
 import os
+from pathlib import Path
 from langchain_groq import ChatGroq
 from config import MODEL_NAME, TEMPERATURE
 
-load_dotenv()
+load_dotenv(dotenv_path=Path(__file__).resolve().parent.parent / ".env", override=True)
 
 def get_llm():
     return ChatGroq(

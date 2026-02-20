@@ -1,7 +1,8 @@
 from langchain_community.tools.tavily_search import TavilySearchResults
 from config import SEARCH_RESULTS_K
 from dotenv import load_dotenv
-load_dotenv()
+from pathlib import Path
+load_dotenv(dotenv_path=Path(__file__).resolve().parent.parent / ".env", override=True)
 
 search_tool = TavilySearchResults(k=SEARCH_RESULTS_K)
 

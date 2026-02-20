@@ -13,8 +13,10 @@ from verifier_chain import build_verifier_chain
 from fastapi.middleware.cors import CORSMiddleware
 from groq import Groq
 from gtts import gTTS
+from pathlib import Path
 
-load_dotenv()
+# Explicitly load .env from the backend/ directory (parent of fake_python/)
+load_dotenv(dotenv_path=Path(__file__).resolve().parent.parent / ".env", override=True)
 
 # Python handles the backslashes automatically when reading from the environment
 tesseract_path = os.getenv("TESSERACT_PATH")
