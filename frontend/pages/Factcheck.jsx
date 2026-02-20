@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import axios from "axios";
+import { jsPDF } from "jspdf";
 import Ic from "../icons";
 import { useReveal } from "../hooks/useReveal";
 import TiltCard from "../components/TiltCard";
@@ -252,6 +253,121 @@ export default function Factcheck({ t }) {
   const activeError = tab === "text" ? error : tab === "image" ? imgError : tab === "voice" ? voiceError : aiError;
 
   const steps = ["Searching evidence", "Cross-referencing", "AI verification", "Building verdict"];
+
+  // ── PDF Report Generator ──
+  const downloadReport = () => {
+    const doc = new jsPDF({ unit: "mm", format: "a4" });
+    const pw = 210, margin = 20, cw = pw - margin * 2;
+    let y = margin;
+    const now = new Date();
+    const timestamp = now.toLocaleString("en-US", { dateStyle: "full", timeStyle: "medium" });
+    const inputType = tab === "text" ? "Text Claim" : tab === "image" ? "Image OCR" : tab === "voice" ? "Voice" : "AI Image Detection";
+    const isAi = tab === "ai";
+    const res = isAi ? aiResult : activeResult;
+    if (!res) return;
+
+    // Helpers
+    const addLine = (x1, x2) => { doc.setDrawColor(180); doc.setLineWidth(0.3); doc.line(x1, y, x2, y); y += 4; };
+    const heading = (text) => {
+      if (y > 265) { doc.addPage(); y = margin; }
+      doc.setFont("helvetica", "bold"); doc.setFontSize(11); doc.setTextColor(40, 40, 40);
+      doc.text(text, margin, y); y += 6;
+      addLine(margin, pw - margin);
+    };
+    const body = (text) => {
+      doc.setFont("helvetica", "normal"); doc.setFontSize(10); doc.setTextColor(60, 60, 60);
+      const lines = doc.splitTextToSize(String(text || ""), cw);
+      lines.forEach(ln => { if (y > 280) { doc.addPage(); y = margin; } doc.text(ln, margin, y); y += 5; });
+      y += 2;
+    };
+    const bullet = (text) => {
+      doc.setFont("helvetica", "normal"); doc.setFontSize(10); doc.setTextColor(60, 60, 60);
+      const lines = doc.splitTextToSize(String(text || ""), cw - 6);
+      lines.forEach((ln, idx) => {
+        if (y > 280) { doc.addPage(); y = margin; }
+        doc.text(idx === 0 ? `  - ${ln}` : `    ${ln}`, margin, y); y += 5;
+      });
+    };
+
+    // ─ Title ─
+    doc.setFont("helvetica", "bold"); doc.setFontSize(18); doc.setTextColor(109, 40, 217);
+    doc.text("TruthLens AI Verification Report", pw / 2, y, { align: "center" }); y += 10;
+    addLine(margin, pw - margin); y += 2;
+
+    // ─ Metadata ─
+    heading("REPORT METADATA");
+    body(`Date and Time: ${timestamp}`);
+    body(`Input Type: ${inputType}`); y += 2;
+
+    // ─ User Input ─
+    heading("USER INPUT");
+    const userInput = tab === "text" ? claim
+      : tab === "image" ? (extractedText || "[Image uploaded for OCR]")
+      : tab === "voice" ? (transcribedText || "[Voice recording]")
+      : "[Image uploaded for AI detection]";
+    body(userInput); y += 2;
+
+    // ─ Verdict ─
+    heading("FINAL VERDICT");
+    const verdict = isAi ? res.verdict : res.verdict;
+    doc.setFont("helvetica", "bold"); doc.setFontSize(13); doc.setTextColor(109, 40, 217);
+    doc.text(String(verdict || "N/A").toUpperCase(), margin, y); y += 8;
+
+    // ─ Confidence ─
+    heading("CONFIDENCE SCORE");
+    const confidence = isAi ? res.confidence_percentage : res.confidence;
+    body(`${confidence ?? "N/A"}%`); y += 2;
+
+    // ─ Analysis ─
+    heading("DETAILED ANALYSIS");
+    const analysis = isAi ? res.detailed_reasoning : res.explanation;
+    body(analysis || "No detailed analysis available."); y += 2;
+
+    // ─ Visual Inconsistencies ─
+    heading("VISUAL INCONSISTENCIES");
+    if (isAi && res.visual_inconsistencies && res.visual_inconsistencies.length > 0) {
+      res.visual_inconsistencies.forEach(item => bullet(item));
+    } else {
+      body("No significant inconsistencies detected.");
+    }
+    y += 2;
+
+    // ─ AI Generation Indicators ─
+    heading("AI GENERATION INDICATORS");
+    if (isAi && res.ai_generation_indicators && res.ai_generation_indicators.length > 0) {
+      res.ai_generation_indicators.forEach(item => bullet(item));
+    } else {
+      body("No AI generation artifacts detected.");
+    }
+    y += 2;
+
+    // ─ Sources ─
+    heading("SOURCES");
+    if (!isAi && res.sources && res.sources.length > 0) {
+      res.sources.forEach(src => bullet(src));
+    } else {
+      body("No external sources available.");
+    }
+    y += 2;
+
+    // ─ Conclusion ─
+    heading("CONCLUSION");
+    const vStr = String(verdict || "Uncertain");
+    const cStr = String(confidence ?? "N/A");
+    body(
+      `Based on the TruthLens AI verification analysis, the submitted content has been assessed as "${vStr}" with a confidence score of ${cStr}%. ` +
+      `This report was generated automatically using forensic AI analysis and cross-referenced evidence. ` +
+      `It is intended for informational purposes and should be considered alongside other verification methods.`
+    );
+    y += 6;
+
+    // ─ Footer ─
+    addLine(margin, pw - margin);
+    doc.setFont("helvetica", "italic"); doc.setFontSize(8); doc.setTextColor(140, 140, 140);
+    doc.text("Generated by TruthLens AI  |  Automated Forensic Verification Platform", pw / 2, y + 2, { align: "center" });
+
+    doc.save(`TruthLens_Report_${now.toISOString().slice(0, 10)}.pdf`);
+  };
 
   return (
     <div style={{ paddingTop: 68, minHeight: "100vh", display: "grid", gridTemplateColumns: "1fr 1fr", position: "relative", zIndex: 1 }}>
@@ -648,7 +764,7 @@ export default function Factcheck({ t }) {
             {/* Sources */}
             {activeResult.sources && activeResult.sources.length > 0 && (
               <TiltCard t={t} style={{
-                padding: 24,
+                padding: 24, marginBottom: 16,
                 opacity: rVis ? 1 : 0, transform: rVis ? "translateY(0)" : "translateY(28px)",
                 transition: "all .9s .2s cubic-bezier(0.16,1,0.3,1)",
               }}>
@@ -673,6 +789,13 @@ export default function Factcheck({ t }) {
                 ))}
               </TiltCard>
             )}
+
+            {/* Download Report */}
+            <Btn t={t} sz="lg" icon={<Ic.Download s={16} />} onClick={downloadReport}
+              style={{ width: "100%", justifyContent: "center", marginTop: 4 }}
+            >
+              Download Report (PDF)
+            </Btn>
           </div>
         )}
 
@@ -747,7 +870,7 @@ export default function Factcheck({ t }) {
             {/* AI Generation Indicators */}
             {aiResult.ai_generation_indicators && aiResult.ai_generation_indicators.length > 0 && (
               <TiltCard t={t} style={{
-                padding: 24,
+                padding: 24, marginBottom: 16,
                 opacity: rVis ? 1 : 0, transform: rVis ? "translateY(0)" : "translateY(28px)",
                 transition: "all .9s .2s cubic-bezier(0.16,1,0.3,1)",
               }}>
@@ -767,6 +890,13 @@ export default function Factcheck({ t }) {
                 </div>
               </TiltCard>
             )}
+
+            {/* Download Report */}
+            <Btn t={t} sz="lg" icon={<Ic.Download s={16} />} onClick={downloadReport}
+              style={{ width: "100%", justifyContent: "center", marginTop: 4 }}
+            >
+              Download Report (PDF)
+            </Btn>
           </div>
         )}
       </div>
