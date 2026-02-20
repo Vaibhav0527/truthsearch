@@ -9,7 +9,8 @@ export default function FullMenu({ open, onClose, page, setPage, isDark, toggleT
     { id: "workspace", label: "ANALYZE", num: "02" },
     { id: "image", label: "IMAGE", num: "03" },
     { id: "voice", label: "VOICE", num: "04" },
-    { id: "history", label: "HISTORY", num: "05" },
+    { id: "factcheck", label: "FACT CHECK", num: "05" },
+    { id: "history", label: "HISTORY", num: "06" },
   ];
   const [hovIdx, setHovIdx] = useState(null);
   const go = (id) => { onClose(); setTimeout(() => setPage(id), 420); };

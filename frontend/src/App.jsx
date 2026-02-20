@@ -19,14 +19,14 @@ import ScrollProg from "../components/ScrollProg";
 import PageWipe from "../components/PageWipe";
 import useGetCurrentUser from "../hooks/useGetCurrentUser";
 import { T, GLOBAL_STYLES } from "../constants";
+import Factcheck from "../pages/Factcheck";
 
 // Map route paths to page IDs used by Navbar/FullMenu
-const routeToPage = { "/": "landing", "/workspace": "workspace", "/image": "image", "/voice": "voice", "/history": "history" };
-const pageToRoute = { landing: "/", workspace: "/workspace", image: "/image", voice: "/voice", history: "/history" };
+const routeToPage = { "/": "landing", "/workspace": "workspace", "/image": "image", "/voice": "voice", "/history": "history", "/factcheck": "factcheck" };
+const pageToRoute = { landing: "/", workspace: "/workspace", image: "/image", voice: "/voice", history: "/history", factcheck: "/factcheck" };
 
 const App = () => {
-  useGetCurrentUser();
-
+  
   const { userData } = useSelector((state) => state.user);
   const [isDark, setIsDark] = useState(true);
   const [loaded, setLoaded] = useState(false);
@@ -103,7 +103,7 @@ const App = () => {
           <Route path="/login" element={!userData ? <SignIn /> : <Navigate to="/" />} />
           <Route path="/workspace" element={userData ? <WorkspacePage t={t} setPage={setPage} isDark={isDark} /> : <Navigate to="/login" />} />
           <Route path="/image" element={userData ? <ImagePage t={t} setPage={setPage} isDark={isDark} /> : <Navigate to="/login" />} />
-          <Route path="/voice" element={userData ? <VoicePage t={t} setPage={setPage} isDark={isDark} /> : <Navigate to="/login" />} />
+          <Route path="/factcheck" element={ <Factcheck t={t} setPage={setPage} isDark={isDark}  />} />
           <Route path="/history" element={userData ? <HistoryPage t={t} setPage={setPage} isDark={isDark} /> : <Navigate to="/login" />} />
         </Routes>
       )}

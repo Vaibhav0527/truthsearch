@@ -17,6 +17,7 @@ import WorkspacePage from "./pages/WorkspacePage";
 import ImagePage from "./pages/ImagePage";
 import VoicePage from "./pages/VoicePage";
 import HistoryPage from "./pages/HistoryPage";
+import Factcheck from "./pages/Factcheck";
 
 // ─── ROOT ────────────────────────────────────────────────────────────────────
 export default function TruthLens() {
@@ -40,7 +41,7 @@ export default function TruthLens() {
     return () => { document.body.style.overflow = ""; };
   }, [menuOpen]);
 
-  const pages = { landing: LandingPage, workspace: WorkspacePage, image: ImagePage, voice: VoicePage, history: HistoryPage };
+  const pages = { landing: LandingPage, workspace: WorkspacePage, image: ImagePage, voice: VoicePage, history: HistoryPage, factcheck: Factcheck };
   const PageComp = pages[page] || LandingPage;
 
   return (
