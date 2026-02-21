@@ -119,9 +119,9 @@ export default function Hamburger({ open, onToggle, t }) {
             <div style={{ display: "flex", flexDirection: "column", gap: 5, alignItems: "center" }}>
               {open ? (
                 <>
-                  <span style={{ width: 22, height: 2, borderRadius: 1, background: CP.purple, transform: "rotate(45deg) translate(0,4.5px)" }} />
+                  <span style={{ width: 22, height: 2, borderRadius: 1, background: CP.purple, transform: "translateY(7px) rotate(45deg)" }} />
                   <span style={{ width: 22, height: 2, borderRadius: 1, background: CP.purple, opacity: 0 }} />
-                  <span style={{ width: 22, height: 2, borderRadius: 1, background: CP.purple, transform: "rotate(-45deg) translate(0,-4.5px)" }} />
+                  <span style={{ width: 22, height: 2, borderRadius: 1, background: CP.purple, transform: "translateY(-7px) rotate(-45deg)" }} />
                 </>
               ) : (
                 <>
@@ -145,7 +145,7 @@ export default function Hamburger({ open, onToggle, t }) {
             width: open ? 24 : 22, height: 2, borderRadius: 1,
             background: barColor,
             transform: open
-              ? "rotate(45deg) translate(0, 4.5px)"
+              ? "translateY(7px) rotate(45deg)"
               : hovered
                 ? "translateX(3px)"
                 : "none",
@@ -168,7 +168,7 @@ export default function Hamburger({ open, onToggle, t }) {
             width: open ? 24 : 22, height: 2, borderRadius: 1,
             background: barColor,
             transform: open
-              ? "rotate(-45deg) translate(0, -4.5px)"
+              ? "translateY(-7px) rotate(-45deg)"
               : hovered
                 ? "translateX(-3px)"
                 : "none",

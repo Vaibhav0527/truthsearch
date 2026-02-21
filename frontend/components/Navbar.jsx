@@ -20,7 +20,7 @@ export default function Navbar({ page, setPage, isDark, toggleTheme, t, menuOpen
   }, []);
   return (
     <nav style={{
-      position: "fixed", top: 0, left: 0, right: 0, zIndex: 6000, height: 84,
+      position: "fixed", top: 0, left: 0, right: 0, zIndex: 8000, height: 84,
       background: scrolled || menuOpen ? t.nav : "transparent",
       backdropFilter: scrolled || menuOpen ? "blur(24px)" : "none",
       borderBottom: scrolled || menuOpen ? `1px solid ${t.line}` : "none",
