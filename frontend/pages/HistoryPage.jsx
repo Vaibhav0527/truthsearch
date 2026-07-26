@@ -132,7 +132,7 @@ function DetailModal({ entry, t, onClose, onExport, onDelete }) {
 
         {/* Gauge */}
         <div style={{ display: "flex", justifyContent: "center", marginBottom: 24 }}>
-          <TrustGauge value={entry.confidence} t={t} />
+          <TrustGauge score={entry.confidence} verdict={entry.verdict} t={t} />
         </div>
 
         {/* Verdict */}

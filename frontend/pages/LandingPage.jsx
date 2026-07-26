@@ -1,4 +1,5 @@
 import { useState } from "react";
+import axios from "axios";
 import Ic from "../icons";
 import { useReveal } from "../hooks/useReveal";
 import RevealLine from "../components/RevealLine";
@@ -7,24 +8,57 @@ import Marquee from "../components/Marquee";
 import TiltCard from "../components/TiltCard";
 import Btn from "../components/Btn";
 import WebGLCard from "../components/WebGLCard";
+import TrustGauge from "../components/TrustGauge";
 import Footer from "../components/Footer";
+import { API, verdictColor, verdictBg, verdictBorder } from "../utils/factcheckHelpers";
 
 // ─── FEATURE CELL ─────────────────────────────────────────────────────────────
 function FeatureCell({ f, i, total, t, fVis }) {
   const [hov, setHov] = useState(false);
   return (
     <div onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)} style={{
-      padding: 32, borderRight: i < total - 1 ? `1px solid ${t.line}` : "none", position: "relative", overflow: "hidden",
-      background: hov ? f.c + "07" : "transparent", transition: "background .4s", cursor: "default",
+      padding: "36px 32px", borderRight: i < total - 1 ? `1px solid ${t.line}` : "none", position: "relative", overflow: "hidden",
+      background: hov ? f.c + "0d" : "transparent", cursor: "default",
       opacity: fVis ? 1 : 0, transform: fVis ? "translateY(0)" : "translateY(32px)",
       transition: `background .4s, opacity .9s ${i * .1}s cubic-bezier(0.16,1,0.3,1), transform .9s ${i * .1}s cubic-bezier(0.16,1,0.3,1)`,
     }}>
-      <div style={{ width: 50, height: 50, borderRadius: 12, background: f.c + "14", border: `1px solid ${f.c}22`, display: "flex", alignItems: "center", justifyContent: "center", color: f.c, marginBottom: 20, transition: "transform .4s cubic-bezier(0.16,1,0.3,1)", transform: hov ? "scale(1.1)" : "scale(1)" }}>
+      <div style={{ width: 54, height: 54, borderRadius: 14, background: f.c + "16", border: `1px solid ${f.c}30`, display: "flex", alignItems: "center", justifyContent: "center", color: f.c, marginBottom: 22, transition: "transform .4s cubic-bezier(0.16,1,0.3,1)", transform: hov ? "scale(1.12)" : "scale(1)", boxShadow: hov ? `0 0 20px ${f.c}40` : "none" }}>
         {f.icon}
       </div>
-      <h3 style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 22, letterSpacing: ".08em", color: t.text, marginBottom: 10 }}>{f.title}</h3>
-      <p style={{ fontFamily: "'Space Grotesk',sans-serif", fontSize: 13, color: t.muted, lineHeight: 1.7 }}>{f.desc}</p>
+      <h3 style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 24, letterSpacing: ".08em", color: t.text, marginBottom: 12 }}>{f.title}</h3>
+      <p style={{ fontFamily: "'Space Grotesk',sans-serif", fontSize: 14, color: t.muted, lineHeight: 1.7 }}>{f.desc}</p>
       <div style={{ position: "absolute", bottom: 0, left: 0, width: hov ? "100%" : "0%", height: 2, background: f.c, transition: "width .45s cubic-bezier(0.16,1,0.3,1)" }} />
+    </div>
+  );
+}
+
+// ─── FAQ ACCORDION ITEM ────────────────────────────────────────────────────────
+function FaqItem({ q, a, t }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div style={{
+      borderRadius: 14, border: `1px solid ${open ? t.accent + "50" : t.line}`,
+      background: open ? t.accent + "08" : t.card, marginBottom: 14, overflow: "hidden",
+      transition: "all .3s ease", backdropFilter: "blur(12px)",
+    }}>
+      <button
+        onClick={() => setOpen(!open)}
+        style={{
+          width: "100%", padding: "20px 24px", display: "flex", alignItems: "center", justifyContent: "space-between",
+          background: "transparent", border: "none", color: t.text, cursor: "pointer", textAlign: "left",
+          fontFamily: "'Space Grotesk',sans-serif", fontSize: 16, fontWeight: 700,
+        }}
+      >
+        <span>{q}</span>
+        <span style={{ transform: open ? "rotate(180deg)" : "rotate(0deg)", transition: "transform .3s", color: t.accent }}>
+          ▼
+        </span>
+      </button>
+      {open && (
+        <div style={{ padding: "0 24px 20px", fontFamily: "'Space Grotesk',sans-serif", fontSize: 14, color: t.muted, lineHeight: 1.7 }}>
+          {a}
+        </div>
+      )}
     </div>
   );
 }
@@ -33,16 +67,50 @@ function FeatureCell({ f, i, total, t, fVis }) {
 export default function LandingPage({ setPage, t, isDark }) {
   const [ref, vis] = useReveal(.04);
   const [fRef, fVis] = useReveal(.08);
+  const [wRef, wVis] = useReveal(.08);
   const [sRef, sVis] = useReveal(.08);
 
+  // Hero Live Interactive Demo State
+  const [heroClaim, setHeroClaim] = useState("");
+  const [heroLoading, setHeroLoading] = useState(false);
+  const [heroResult, setHeroResult] = useState(null);
+
+  const handleHeroCheck = async (text) => {
+    const claimToVerify = text || heroClaim;
+    if (!claimToVerify.trim()) return;
+    setHeroClaim(claimToVerify);
+    setHeroLoading(true);
+    setHeroResult(null);
+    try {
+      const { data } = await axios.post(`${API}/fact-check`, { claim: claimToVerify.trim() });
+      setHeroResult(data);
+    } catch {
+      setHeroResult(null);
+    } finally {
+      setHeroLoading(false);
+    }
+  };
+
   const feats = [
-    { icon: <Ic.Search s={24} />, title: "TEXT AI", desc: "Deep NLP across 140M fact-checks. Source verification across 190+ languages.", c: "#b57bff" },
-    { icon: <Ic.Mic s={24} />, title: "VOICE AI", desc: "Real-time transcription, deepfake detection, speaker credibility scoring.", c: "#a78bfa" },
-    { icon: <Ic.Img s={24} />, title: "IMAGE AI", desc: "Pixel-level manipulation, metadata inspection, AI generation probability.", c: "#818cf8" },
-    { icon: <Ic.Brain s={24} />, title: "EXPLAIN AI", desc: "Human-readable verdicts with evidence-backed citations. Every time.", c: "#c084fc" },
+    { icon: <Ic.Search s={26} />, title: "TEXT FACT CHECK", desc: "Real-time evidence retrieval via Tavily Search with Llama 3 reasoning and source citations.", c: "#b57bff" },
+    { icon: <Ic.Mic s={26} />, title: "VOICE AUDIO CHECK", desc: "Real-time speech transcription, spectral audio voiceprint analysis & deepfake detection.", c: "#a78bfa" },
+    { icon: <Ic.Img s={26} />, title: "IMAGE OCR INSPECT", desc: "Extract text from viral news memes & screenshots with pixel manipulation forensic checks.", c: "#818cf8" },
+    { icon: <Ic.Brain s={26} />, title: "EXPLAINABLE AI", desc: "Transparent, human-readable verdicts with verifiable web citations and confidence metrics.", c: "#c084fc" },
   ];
 
-  const stats = [{ v: "98.7%", l: "ACCURACY" }, { v: "2.1s", l: "AVG TIME" }, { v: "140M+", l: "CLAIMS" }, { v: "190+", l: "LANGUAGES" }];
+  const steps = [
+    { num: "01", title: "Input Claim", desc: "Submit text claim, voice recording, or viral news image OCR.", icon: <Ic.Search s={20} /> },
+    { num: "02", title: "Live Web Search", desc: "Scrapes live authoritative news sources & official database entries.", icon: <Ic.Clock s={20} /> },
+    { num: "03", title: "Llama-3 Reasoning", desc: "Synthesizes retrieved evidence with strict subject-predicate alignment.", icon: <Ic.Brain s={20} /> },
+    { num: "04", title: "Explainable Verdict", desc: "Instant trust score, detailed explanation & PDF report download.", icon: <Ic.Shield s={20} /> },
+  ];
+
+  const stats = [
+    { v: "100%", l: "EXPLAINABLE AI" },
+    { v: "< 1.5s", l: "RESPONSE LATENCY" },
+    { v: "LIVE", l: "WEB EVIDENCE" },
+    { v: "MULTI-MODAL", l: "TEXT, VOICE & OCR" }
+  ];
 
   return (
     <div style={{ paddingTop: 84, minHeight: "100vh", position: "relative", zIndex: 1 }}>
@@ -53,149 +121,214 @@ export default function LandingPage({ setPage, t, isDark }) {
         {/* Full-bleed perspective grid */}
         <div style={{ position: "absolute", inset: 0, backgroundImage: `linear-gradient(rgba(181,123,255,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(181,123,255,.04) 1px,transparent 1px)`, backgroundSize: "80px 80px", pointerEvents: "none", animation: "gridPulse 6s ease-in-out infinite" }} />
 
+        {/* Ambient radial glow */}
+        <div style={{ position: "absolute", top: "20%", left: "30%", width: 600, height: 600, borderRadius: "50%", background: "radial-gradient(circle, rgba(181,123,255,0.15) 0%, transparent 70%)", filter: "blur(60px)", pointerEvents: "none" }} />
+
         {/* Animated HUD scan beam */}
         <div style={{ position: "absolute", left: 0, right: 0, height: 2, background: `linear-gradient(to right,transparent,rgba(181,123,255,.7) 20%,rgba(220,180,255,.9) 50%,rgba(181,123,255,.7) 80%,transparent)`, boxShadow: `0 0 18px 4px rgba(181,123,255,.25)`, animation: "heroScan 7s ease-in-out infinite", pointerEvents: "none", zIndex: 3 }} />
 
-        {/* Large ghost "VERIFY" word */}
-        <div style={{ position: "absolute", right: -40, top: "50%", transform: "translateY(-50%)", fontFamily: "'Bebas Neue',sans-serif", fontSize: "clamp(240px,32vw,480px)", letterSpacing: ".01em", color: t.accent, opacity: .022, lineHeight: 1, userSelect: "none", pointerEvents: "none", whiteSpace: "nowrap" }}>VERIFY</div>
-
-        {/* Orbit rings */}
-        <div style={{ position: "absolute", top: "35%", left: "60%", transform: "translate(-50%,-50%)", width: 520, height: 520, borderRadius: "50%", border: "1px solid rgba(181,123,255,.06)", animation: "spin 30s linear infinite", pointerEvents: "none" }} />
-        <div style={{ position: "absolute", top: "35%", left: "60%", transform: "translate(-50%,-50%) rotateX(75deg)", width: 620, height: 620, borderRadius: "50%", border: "1px dashed rgba(181,123,255,.04)", animation: "spin 20s linear infinite reverse", pointerEvents: "none" }} />
-
-        {/* Corner HUD brackets */}
-        <div style={{ position: "absolute", top: 120, left: 60, width: 48, height: 48, borderTop: `1.5px solid rgba(181,123,255,.28)`, borderLeft: `1.5px solid rgba(181,123,255,.28)`, opacity: vis ? 1 : 0, transition: "opacity 1s .8s", pointerEvents: "none" }} />
-        <div style={{ position: "absolute", bottom: 80, right: 60, width: 48, height: 48, borderBottom: `1.5px solid rgba(181,123,255,.28)`, borderRight: `1.5px solid rgba(181,123,255,.28)`, opacity: vis ? 1 : 0, transition: "opacity 1s .9s", pointerEvents: "none" }} />
-
-        {/* Floating data chips */}
-        {vis && [
-          { label: "98.7% ACCURACY", top: "18%", right: "28%", delay: .9 },
-          { label: "LIVE ◉", top: "72%", right: "20%", delay: 1.1 },
-          { label: "2.1s AVG", top: "58%", right: "38%", delay: 1.3 },
-        ].map((chip, i) => (
-          <div key={i} style={{ position: "absolute", top: chip.top, right: chip.right, fontFamily: "'DM Mono',monospace", fontSize: 9, letterSpacing: ".2em", color: "rgba(181,123,255,.6)", border: "1px solid rgba(181,123,255,.18)", padding: "4px 10px", borderRadius: 4, background: "rgba(181,123,255,.04)", backdropFilter: "blur(8px)", opacity: vis ? 1 : 0, transform: vis ? "translateY(0)" : "translateY(10px)", transition: `all .8s ${chip.delay}s cubic-bezier(0.16,1,0.3,1)`, pointerEvents: "none", animation: `floatChip ${2.5 + i * .4}s ease-in-out infinite ${chip.delay}s` }}>
-            {chip.label}
-          </div>
-        ))}
-
         {/* Top status bar */}
         <RevealLine inView={vis} delay={.04}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 56, fontFamily: "'DM Mono',monospace", fontSize: 9, color: t.faint, letterSpacing: ".3em", borderBottom: `1px solid ${t.line}`, paddingBottom: 18 }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 56, fontFamily: "'DM Mono',monospace", fontSize: 11, color: t.muted, letterSpacing: ".25em", borderBottom: `1px solid ${t.line}`, paddingBottom: 18 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
-              <span style={{ color: t.hi, display: "flex", alignItems: "center", gap: 7 }}>
-                <span style={{ width: 6, height: 6, borderRadius: "50%", background: t.hi, display: "inline-block", animation: "statusBlink 2.5s ease-in-out infinite" }} />
+              <span style={{ color: t.hi, display: "flex", alignItems: "center", gap: 8, fontWeight: 700 }}>
+                <span style={{ width: 8, height: 8, borderRadius: "50%", background: t.hi, display: "inline-block", animation: "statusBlink 2.5s ease-in-out infinite" }} />
                 SYSTEM ONLINE
               </span>
               <span>│</span>
-              <span>140M+ CLAIMS INDEXED</span>
+              <span>POWERED BY LLAMA-3 & TAVILY</span>
               <span>│</span>
-              <span>190+ LANGUAGES</span>
+              <span>LIVE WEB SEARCH</span>
             </div>
-            <span style={{ color: t.accent, animation: "dataFlicker 8s ease-in-out infinite" }}>SYS://TRUTHLENS.AI</span>
+            <span style={{ color: t.accent, fontWeight: 700 }}>TRUTHLENS VERIFICATION ENGINE</span>
           </div>
         </RevealLine>
 
-        {/* Main layout */}
+        {/* Main Hero layout */}
         <div style={{ display: "flex", alignItems: "center", gap: 60, position: "relative", zIndex: 2 }}>
-          {/* Left: Text */}
+          {/* Left: Text & Interactive Live Demo */}
           <div style={{ flex: "0 0 55%", position: "relative", zIndex: 2 }}>
             <RevealLine inView={vis} delay={.08}>
               <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 24 }}>
-                <div style={{ width: 32, height: 1, background: t.accent }} />
-                <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 9, letterSpacing: ".44em", color: t.accent }}>DETECTION PROTOCOL 01</span>
+                <div style={{ width: 36, height: 1.5, background: t.accent }} />
+                <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, letterSpacing: ".35em", color: t.accent, fontWeight: 700 }}>REAL-TIME MISINFORMATION DETECTION</span>
               </div>
             </RevealLine>
 
             <SplitReveal text="TRUTH" inView={vis} delay={.1}
-              style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: "clamp(96px,13vw,180px)", letterSpacing: ".02em", lineHeight: .88, color: t.text, overflow: "visible", marginBottom: 4, filter: vis ? "none" : "blur(8px)", transition: "filter 1s .1s" }} />
+              style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: "clamp(100px,14vw,192px)", letterSpacing: ".02em", lineHeight: .88, color: t.text, overflow: "visible", marginBottom: 4, filter: vis ? "none" : "blur(8px)", transition: "filter 1s .1s" }} />
 
             <div style={{ height: 2, width: vis ? "100%" : "0", maxWidth: 500, background: `linear-gradient(to right,${t.accent},rgba(181,123,255,.2))`, margin: "8px 0", transition: "width 1s .32s cubic-bezier(0.16,1,0.3,1)" }} />
 
             <SplitReveal text="LENS" inView={vis} delay={.28}
-              style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: "clamp(96px,13vw,180px)", letterSpacing: ".02em", lineHeight: .88, WebkitTextStroke: `1.5px ${t.accent}`, color: "transparent", overflow: "visible", marginBottom: 36, textShadow: `0 0 60px ${t.accent}30` }} />
+              style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: "clamp(100px,14vw,192px)", letterSpacing: ".02em", lineHeight: .88, WebkitTextStroke: `1.5px ${t.accent}`, color: "transparent", overflow: "visible", marginBottom: 36, textShadow: `0 0 60px ${t.accent}30` }} />
 
             <RevealLine inView={vis} delay={.46}>
-              <p style={{ fontFamily: "'Space Grotesk',sans-serif", fontSize: "clamp(16px,1.9vw,20px)", color: t.muted, lineHeight: 1.7, maxWidth: 460, marginBottom: 44 }}>
+              <p style={{ fontFamily: "'Space Grotesk',sans-serif", fontSize: "clamp(18px,2.2vw,22px)", color: t.muted, lineHeight: 1.75, maxWidth: 540, marginBottom: 36 }}>
                 Don't just know it's fake.&nbsp;
                 <span style={{ color: t.text, fontWeight: 700, fontStyle: "italic" }}>Know exactly why.</span>
-                &nbsp;Explainable AI verdicts across text, voice, and images.
+                &nbsp;Explainable AI verdicts across text claims, voice audio, and images with forensic precision.
               </p>
             </RevealLine>
 
-            <RevealLine inView={vis} delay={.58}>
-              <div style={{ display: "flex", gap: 14, flexWrap: "wrap", marginBottom: 36 }}>
-                <Btn t={t} sz="lg" icon={<Ic.Search s={16} />} onClick={() => setPage("factcheck")}>Analyze Text</Btn>
-                <Btn t={t} v="secondary" sz="lg" icon={<Ic.Mic s={16} />} onClick={() => setPage("voicecheck")}>Voice</Btn>
-                <Btn t={t} v="secondary" sz="lg" icon={<Ic.Img s={16} />} onClick={() => setPage("imagecheck")}>Image</Btn>
+            {/* Quick Hero Interactive Test Widget */}
+            <RevealLine inView={vis} delay={.55}>
+              <div style={{
+                background: "rgba(18, 18, 30, 0.7)", border: `1px solid ${t.accent}35`,
+                borderRadius: 16, padding: "16px 20px", backdropFilter: "blur(16px)",
+                maxWidth: 540, marginBottom: 36, boxShadow: `0 0 24px ${t.glow}`,
+              }}>
+                <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, color: t.accent, letterSpacing: ".14em", marginBottom: 10, fontWeight: 700 }}>
+                  ⚡ TEST THE AI FACT-CHECKER INSTANTLY:
+                </div>
+                <div style={{ display: "flex", gap: 10, marginBottom: 12 }}>
+                  <input
+                    value={heroClaim}
+                    onChange={e => setHeroClaim(e.target.value)}
+                    onKeyDown={e => e.key === "Enter" && handleHeroCheck()}
+                    placeholder="Enter claim (e.g. Water boils at 100°C)..."
+                    style={{
+                      flex: 1, background: t.input, border: `1px solid ${t.border}`,
+                      borderRadius: 10, padding: "10px 14px", color: t.text,
+                      fontFamily: "'Space Grotesk',sans-serif", fontSize: 14, outline: "none",
+                    }}
+                  />
+                  <button
+                    onClick={() => handleHeroCheck()}
+                    disabled={!heroClaim.trim() || heroLoading}
+                    style={{
+                      padding: "10px 18px", borderRadius: 10,
+                      background: `linear-gradient(135deg, ${t.accent}, #7c3aed)`,
+                      color: "#fff", border: "none", cursor: "pointer",
+                      fontFamily: "'DM Mono',monospace", fontSize: 12, fontWeight: 700,
+                    }}
+                  >
+                    {heroLoading ? "CHECKING…" : "VERIFY"}
+                  </button>
+                </div>
+
+                {/* Sample claim chips */}
+                <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                  {[
+                    "Water boils at 100 degrees Celsius",
+                    "India is capital delhi",
+                    "The Great Wall of China is visible from space"
+                  ].map((s, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => handleHeroCheck(s)}
+                      style={{
+                        fontFamily: "'Space Grotesk',sans-serif", fontSize: 11,
+                        padding: "4px 10px", borderRadius: 14,
+                        background: t.card, border: `1px solid ${t.border}`,
+                        color: t.muted, cursor: "pointer"
+                      }}
+                    >
+                      "{s.slice(0, 30)}..."
+                    </button>
+                  ))}
+                </div>
+
+                {/* Hero Result Banner */}
+                {heroResult && (
+                  <div style={{ marginTop: 14, paddingTop: 14, borderTop: `1px solid ${t.line}` }}>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+                      <span style={{
+                        padding: "3px 12px", borderRadius: 16, fontSize: 11, fontWeight: 700,
+                        fontFamily: "'DM Mono',monospace",
+                        background: verdictBg(heroResult.verdict, t),
+                        color: verdictColor(heroResult.verdict, t),
+                        border: `1px solid ${verdictBorder(heroResult.verdict, t)}`,
+                      }}>
+                        VERDICT: {heroResult.verdict?.toUpperCase()}
+                      </span>
+                      <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, color: t.muted }}>
+                        Confidence: {heroResult.confidence}%
+                      </span>
+                    </div>
+                    <p style={{ fontFamily: "'Space Grotesk',sans-serif", fontSize: 13, color: t.text, lineHeight: 1.5, marginBottom: 8 }}>
+                      {heroResult.explanation}
+                    </p>
+                    <button
+                      onClick={() => setPage("factcheck")}
+                      style={{
+                        background: "transparent", border: "none", color: t.accent,
+                        fontFamily: "'Space Grotesk',sans-serif", fontSize: 12,
+                        cursor: "pointer", fontWeight: 700, textDecoration: "underline",
+                      }}
+                    >
+                      View Full Analysis Page →
+                    </button>
+                  </div>
+                )}
               </div>
             </RevealLine>
 
-            {/* Live ticker */}
-            <RevealLine inView={vis} delay={.7}>
-              <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 16px", borderRadius: 8, border: `1px solid ${t.border}`, background: t.card, backdropFilter: "blur(12px)", maxWidth: 380 }}>
-                <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#4ade80", animation: "blink 1.5s step-end infinite", flexShrink: 0 }} />
-                <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 9, color: "#4ade80", letterSpacing: ".18em" }}>LIVE</div>
-                <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, color: t.muted, letterSpacing: ".08em", overflow: "hidden", whiteSpace: "nowrap", textOverflow: "ellipsis" }}>Analyzing: "Breaking: New study shows..."</div>
+            <RevealLine inView={vis} delay={.68}>
+              <div style={{ display: "flex", gap: 14, flexWrap: "wrap", marginBottom: 36 }}>
+                <Btn t={t} sz="lg" icon={<Ic.Search s={18} />} onClick={() => setPage("factcheck")}>Analyze Text</Btn>
+                <Btn t={t} v="secondary" sz="lg" icon={<Ic.Mic s={18} />} onClick={() => setPage("voicecheck")}>Voice Check</Btn>
+                <Btn t={t} v="secondary" sz="lg" icon={<Ic.Img s={18} />} onClick={() => setPage("imagecheck")}>Image OCR</Btn>
               </div>
             </RevealLine>
           </div>
 
-          {/* Right: HUD-framed WebGL */}
+          {/* Right: HUD-framed WebGL Neural Visualizer */}
           <div style={{ flex: "0 0 45%", paddingLeft: 20, opacity: vis ? 1 : 0, transform: vis ? "translateY(0)" : "translateY(40px)", transition: "opacity 1.2s .7s, transform 1.2s .7s cubic-bezier(0.16,1,0.3,1)", position: "relative" }}>
             <div style={{ position: "relative" }}>
-              <div style={{ position: "absolute", top: -14, left: -14, right: -14, bottom: -14, borderRadius: 24, border: `1px solid rgba(181,123,255,.1)`, pointerEvents: "none", animation: "framePulse 3s ease-in-out infinite" }} />
+              <div style={{ position: "absolute", top: -14, left: -14, right: -14, bottom: -14, borderRadius: 24, border: `1px solid rgba(181,123,255,.15)`, pointerEvents: "none", animation: "framePulse 3s ease-in-out infinite" }} />
               <div style={{ position: "absolute", top: -5, left: -5, width: 18, height: 18, borderTop: `2px solid ${t.accent}`, borderLeft: `2px solid ${t.accent}`, borderRadius: "2px 0 0 0", pointerEvents: "none" }} />
               <div style={{ position: "absolute", top: -5, right: -5, width: 18, height: 18, borderTop: `2px solid ${t.accent}`, borderRight: `2px solid ${t.accent}`, borderRadius: "0 2px 0 0", pointerEvents: "none" }} />
               <div style={{ position: "absolute", bottom: -5, left: -5, width: 18, height: 18, borderBottom: `2px solid ${t.accent}`, borderLeft: `2px solid ${t.accent}`, borderRadius: "0 0 0 2px", pointerEvents: "none" }} />
               <div style={{ position: "absolute", bottom: -5, right: -5, width: 18, height: 18, borderBottom: `2px solid ${t.accent}`, borderRight: `2px solid ${t.accent}`, borderRadius: "0 0 2px 0", pointerEvents: "none" }} />
-              <div style={{ position: "absolute", top: -26, left: 0, fontFamily: "'DM Mono',monospace", fontSize: 8, color: "rgba(181,123,255,.38)", letterSpacing: ".28em" }}>SYS:NEURAL_VIZ // ACTIVE</div>
+              <div style={{ position: "absolute", top: -26, left: 0, fontFamily: "'DM Mono',monospace", fontSize: 10, color: "rgba(181,123,255,.38)", letterSpacing: ".28em" }}>LIVE EVIDENCE ANALYSIS ENGINE</div>
               <WebGLCard t={t} isDark={isDark} />
               <div style={{ display: "flex", marginTop: 8, gap: 0, border: `1px solid ${t.border}`, borderRadius: 8, overflow: "hidden", background: t.card, backdropFilter: "blur(12px)" }}>
-                {[["98.7%", "ACCURACY"], ["2.1s", "DETECT"], ["∞", "REAL-TIME"]].map((d, i) => (
-                  <div key={d[1]} style={{ flex: 1, padding: "10px 0", textAlign: "center", borderRight: i < 2 ? `1px solid ${t.line}` : "none" }}>
-                    <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 20, letterSpacing: ".04em", color: t.accent, lineHeight: 1 }}>{d[0]}</div>
-                    <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 7, color: t.faint, letterSpacing: ".2em", marginTop: 2 }}>{d[1]}</div>
+                {[["100%", "EXPLAINABLE AI"], ["< 1.5s", "RESPONSE LATENCY"], ["LIVE", "WEB SOURCES"]].map((d, i) => (
+                  <div key={d[1]} style={{ flex: 1, padding: "12px 0", textAlign: "center", borderRight: i < 2 ? `1px solid ${t.line}` : "none" }}>
+                    <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 24, letterSpacing: ".04em", color: t.accent, lineHeight: 1 }}>{d[0]}</div>
+                    <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 9, color: t.faint, letterSpacing: ".2em", marginTop: 4 }}>{d[1]}</div>
                   </div>
                 ))}
               </div>
-              <div style={{ position: "absolute", bottom: -24, right: 0, fontFamily: "'DM Mono',monospace", fontSize: 8, color: "rgba(181,123,255,.3)", letterSpacing: ".2em" }}>↑ HOVER TO DISTORT</div>
             </div>
           </div>
         </div>
 
         {/* Bottom coordinate bar */}
         <RevealLine inView={vis} delay={.8}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 56, paddingTop: 20, borderTop: `1px solid ${t.line}`, fontFamily: "'DM Mono',monospace", fontSize: 9, color: t.faint, letterSpacing: ".24em" }}>
-            <span>48.8566°N / 2.3522°E</span>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 56, paddingTop: 20, borderTop: `1px solid ${t.line}`, fontFamily: "'DM Mono',monospace", fontSize: 11, color: t.muted, letterSpacing: ".24em" }}>
+            <span>LIVE EVIDENCE RETRIEVAL</span>
             <span style={{ color: t.accent, opacity: .5 }}>◆</span>
             <span>{new Date().toISOString().slice(0, 10)}</span>
             <span style={{ color: t.accent, opacity: .5 }}>◆</span>
-            <span>SYS://TRUTHLENS.AI/HERO</span>
+            <span>REAL-TIME VERIFICATION PLATFORM</span>
           </div>
         </RevealLine>
       </section>
 
+
       {/* Stats bar */}
       <div ref={sRef} style={{ borderTop: `1px solid ${t.line}`, borderBottom: `1px solid ${t.line}`, display: "flex", padding: "0 60px" }}>
         {stats.map((s, i) => (
-          <div key={s.l} style={{ flex: 1, padding: "28px 0", borderRight: i < stats.length - 1 ? `1px solid ${t.line}` : "none", textAlign: "center", opacity: sVis ? 1 : 0, transform: sVis ? "translateY(0)" : "translateY(20px)", transition: `all .8s ${i * .08}s cubic-bezier(0.16,1,0.3,1)` }}>
-            <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 42, letterSpacing: ".04em", color: t.accent, lineHeight: 1 }}>{s.v}</div>
-            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, color: t.faint, letterSpacing: ".22em", marginTop: 4 }}>{s.l}</div>
+          <div key={s.l} style={{ flex: 1, padding: "32px 0", borderRight: i < stats.length - 1 ? `1px solid ${t.line}` : "none", textAlign: "center", opacity: sVis ? 1 : 0, transform: sVis ? "translateY(0)" : "translateY(20px)", transition: `all .8s ${i * .08}s cubic-bezier(0.16,1,0.3,1)` }}>
+            <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 52, letterSpacing: ".04em", color: t.accent, lineHeight: 1 }}>{s.v}</div>
+            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 12, color: t.muted, letterSpacing: ".22em", marginTop: 6, fontWeight: 700 }}>{s.l}</div>
           </div>
         ))}
       </div>
 
       <Marquee text="TEXT ANALYSIS • VOICE DETECTION • IMAGE VERIFICATION • EXPLAINABLE AI • FACT CHECKING •" t={t} />
 
-      {/* ══ FEATURES ══ */}
+      {/* ══ CAPABILITIES FEATURE GRID ══ */}
       <section ref={fRef} style={{ padding: "100px 60px", position: "relative", zIndex: 1 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 56 }}>
-          <div style={{ width: 44, height: 1, background: t.accent }} />
-          <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: ".35em", color: t.accent }}>CAPABILITIES</span>
+          <div style={{ width: 44, height: 1.5, background: t.accent }} />
+          <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 12, letterSpacing: ".35em", color: t.accent, fontWeight: 700 }}>CAPABILITIES</span>
         </div>
         <div style={{ overflow: "hidden", marginBottom: 56 }}>
           <div style={{ transform: fVis ? "translateY(0)" : "translateY(110%)", transition: "transform 1.2s cubic-bezier(0.16,1,0.3,1)" }}>
-            <h2 style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: "clamp(48px,7vw,96px)", letterSpacing: ".03em", color: t.text, lineHeight: .95 }}>
+            <h2 style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: "clamp(52px,7.5vw,104px)", letterSpacing: ".03em", color: t.text, lineHeight: .95 }}>
               Every type of misinformation.<br /><span style={{ color: t.accent }}>One platform.</span>
             </h2>
           </div>
@@ -207,14 +340,79 @@ export default function LandingPage({ setPage, t, isDark }) {
         </div>
       </section>
 
+      {/* ══ WORKFLOW PIPELINE ══ */}
+      <section ref={wRef} style={{ padding: "80px 60px 100px", position: "relative", zIndex: 1, borderTop: `1px solid ${t.line}` }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 44 }}>
+          <div style={{ width: 44, height: 1.5, background: t.accent }} />
+          <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 12, letterSpacing: ".35em", color: t.accent, fontWeight: 700 }}>HOW IT WORKS</span>
+        </div>
+        <h2 style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 54, letterSpacing: ".04em", color: t.text, marginBottom: 48, lineHeight: .95 }}>
+          The Forensic Verification Pipeline
+        </h2>
+
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 24 }}>
+          {steps.map((st, idx) => (
+            <TiltCard key={st.num} t={t} style={{
+              padding: 30, position: "relative",
+              opacity: wVis ? 1 : 0, transform: wVis ? "translateY(0)" : "translateY(28px)",
+              transition: `all .8s ${idx * .1}s cubic-bezier(0.16,1,0.3,1)`,
+            }}>
+              <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 44, color: t.accent, lineHeight: 1, marginBottom: 12 }}>
+                {st.num}
+              </div>
+              <h3 style={{ fontFamily: "'Space Grotesk',sans-serif", fontSize: 18, fontWeight: 700, color: t.text, marginBottom: 10, display: "flex", alignItems: "center", gap: 8 }}>
+                {st.icon}
+                {st.title}
+              </h3>
+              <p style={{ fontFamily: "'Space Grotesk',sans-serif", fontSize: 14, color: t.muted, lineHeight: 1.6 }}>
+                {st.desc}
+              </p>
+            </TiltCard>
+          ))}
+        </div>
+      </section>
+
+      {/* ══ FAQ SECTION ══ */}
+      <section style={{ padding: "80px 60px 100px", position: "relative", zIndex: 1, borderTop: `1px solid ${t.line}` }}>
+        <div style={{ maxWidth: 800, margin: "0 auto" }}>
+          <h2 style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 54, letterSpacing: ".04em", color: t.text, textAlign: "center", marginBottom: 16 }}>
+            Frequently Asked Questions
+          </h2>
+          <p style={{ fontFamily: "'Space Grotesk',sans-serif", color: t.muted, fontSize: 16, textAlign: "center", marginBottom: 44 }}>
+            Learn how TruthLens verifies claims with forensic precision
+          </p>
+
+          <FaqItem
+            q="How does TruthLens verify claims so fast?"
+            a="TruthLens uses a hybrid pipeline combining real-time web evidence retrieval (via Tavily Search) with Llama 3 reasoning. It queries live authoritative sources, extracts facts, and synthesizes an explainable verdict in under 1.5 seconds."
+            t={t}
+          />
+          <FaqItem
+            q="Can I analyze images, memes, and audio recordings?"
+            a="Yes! TruthLens supports multi-modal input. Upload images to extract embedded text via OCR, or record voice claims for spectral audio analysis and speech transcription."
+            t={t}
+          />
+          <FaqItem
+            q="How does TruthLens ensure verdicts are unbiased and accurate?"
+            a="TruthLens grounds its reasoning strictly in retrieved evidence from primary sources, news agencies (AP, Reuters), and official database entries (WHO, NASA, Government registries), checking subject-predicate relationship directionality."
+            t={t}
+          />
+          <FaqItem
+            q="Can I export fact-checking reports?"
+            a="Every analysis includes a downloadable PDF report formatted with trust scores, explanation summaries, and verified clickable source citations."
+            t={t}
+          />
+        </div>
+      </section>
+
       <Marquee text="WHO DATABASE • SNOPES • REUTERS FACT CHECK • AP VERIFY • POLITIFACT • FULL FACT •" reverse t={t} speed={19} />
 
-      {/* ══ CTA ══ */}
+      {/* ══ CTA BANNER ══ */}
       <section style={{ padding: "90px 60px 130px", position: "relative", zIndex: 1 }}>
-        <TiltCard t={t} glow style={{ maxWidth: 600, padding: "60px 52px", margin: "0 auto", textAlign: "center", background: isDark ? "linear-gradient(135deg,rgba(181,123,255,.09),rgba(109,40,217,.05))" : "linear-gradient(135deg,rgba(109,40,217,.07),rgba(181,123,255,.04))" }}>
-          <h2 style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 60, letterSpacing: ".04em", color: t.text, lineHeight: .95, marginBottom: 14 }}>Start detecting<br />misinformation</h2>
-          <p style={{ fontFamily: "'Space Grotesk',sans-serif", color: t.muted, fontSize: 15, marginBottom: 32 }}>Free to try. No credit card. 10 analyses per day.</p>
-          <Btn t={t} sz="lg" onClick={() => setPage("factcheck")} icon={<Ic.Arr s={15} />}>Start Fact Checking</Btn>
+        <TiltCard t={t} glow style={{ maxWidth: 680, padding: "64px 56px", margin: "0 auto", textAlign: "center", background: isDark ? "linear-gradient(135deg,rgba(181,123,255,.09),rgba(109,40,217,.05))" : "linear-gradient(135deg,rgba(109,40,217,.07),rgba(181,123,255,.04))" }}>
+          <h2 style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 68, letterSpacing: ".04em", color: t.text, lineHeight: .95, marginBottom: 16 }}>Start detecting<br />misinformation</h2>
+          <p style={{ fontFamily: "'Space Grotesk',sans-serif", color: t.text, fontSize: 17, marginBottom: 36, lineHeight: 1.6 }}>Free to try. Instant real-time AI fact-checking across text, voice, and images.</p>
+          <Btn t={t} sz="lg" onClick={() => setPage("factcheck")} icon={<Ic.Arr s={18} />}>Start Fact Checking Now</Btn>
         </TiltCard>
       </section>
 
@@ -222,3 +420,5 @@ export default function LandingPage({ setPage, t, isDark }) {
     </div>
   );
 }
+
+

@@ -1,22 +1,30 @@
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, AliasChoices
 
 class FactCheckResult(BaseModel):
     verdict: str = Field(
-        description="True/ False/ Misleading/ Unverified"
+        default="Unverified",
+        description="Must be one of: True, False, Misleading, Unverified"
     )
     explanation: str = Field(
-        description="Long explanation of why the verdict was given"
+        default="No explanation provided.",
+        description="Factual summary explaining why the verdict was assigned"
     )
     confidence: int = Field(
-        description="Integer from 0 to 100"
+        default=50,
+        validation_alias=AliasChoices("confidence", "confidence_score"),
+        description="Integer from 0 to 100 representing confidence score"
     )
     sources: list[str] = Field(
-        description="List of URLs used for verification"
+        default_factory=list,
+        description="List of HTTP/HTTPS URLs used for verification"
     )
 
     @field_validator("confidence", mode="before")
     @classmethod
     def coerce_confidence(cls, v):
         if isinstance(v, str):
-            return int(v)
-        return v
+            try:
+                return int(v)
+            except ValueError:
+                return 50
+        return v if v is not None else 50

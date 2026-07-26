@@ -158,7 +158,7 @@ export default function AIDetectPage({ t, setPage }) {
               opacity: rVis ? 1 : 0, transform: rVis ? "translateY(0)" : "translateY(28px)",
               transition: "all .9s cubic-bezier(0.16,1,0.3,1)",
             }}>
-              <TrustGauge score={result.confidence_percentage ?? 0} t={t} />
+              <TrustGauge score={result.confidence_percentage ?? 0} verdict={result.verdict} t={t} />
             </TiltCard>
 
             {/* Verdict */}

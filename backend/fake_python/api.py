@@ -57,6 +57,8 @@ def fact_check(request: ClaimRequest):
 
         return result.model_dump()
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
     
 

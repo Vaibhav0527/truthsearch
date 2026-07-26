@@ -10,6 +10,8 @@ import { setUserData } from "../redux/userSlice";
 import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import Footer from "../components/Footer";
 
+import { backendUrl } from "../src/config";
+
 const SignIn = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
@@ -26,7 +28,7 @@ const SignIn = () => {
 
     try {
       const result = await axios.post(
-        "http://localhost:8000/api/auth/signin",
+        `${backendUrl}/api/auth/login`,
         { email, password },
         { withCredentials: true }
       );
@@ -46,7 +48,7 @@ const SignIn = () => {
       const result = await signInWithPopup(auth, provider);
 
       const { data } = await axios.post(
-        "http://localhost:8000/api/auth/google-auth",
+        `${backendUrl}/api/auth/google-auth`,
         {
           fullname: result.user.displayName,
           email: result.user.email,

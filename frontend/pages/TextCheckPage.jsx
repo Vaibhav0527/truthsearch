@@ -51,10 +51,10 @@ export default function TextCheckPage({ t, setPage }) {
       {/* ───── LEFT: INPUT PANEL ───── */}
       <div style={{ borderRight: `1px solid ${t.line}`, padding: "52px 48px", overflowY: "auto", maxHeight: "calc(100vh - 68px)" }}>
         <button onClick={() => setPage("landing")} data-mag style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "6px 14px", borderRadius: 8, border: `1px solid ${t.border}`, background: "transparent", color: t.muted, fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: ".08em", cursor: "pointer", transition: "all .25s", marginBottom: 20 }} onMouseEnter={e => { e.currentTarget.style.color = t.accent; e.currentTarget.style.borderColor = t.accent + "50"; }} onMouseLeave={e => { e.currentTarget.style.color = t.muted; e.currentTarget.style.borderColor = t.border; }}><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="19 12 5 12" /><polyline points="12 19 5 12 12 5" /></svg>BACK</button>
-        <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 48, letterSpacing: ".03em", color: t.text, lineHeight: .95, marginBottom: 8 }}>
+        <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 56, letterSpacing: ".03em", color: t.text, lineHeight: .95, marginBottom: 12 }}>
           Text<br />Fact Check
         </div>
-        <p style={{ fontFamily: "'Space Grotesk',sans-serif", color: t.muted, fontSize: 14, marginBottom: 28 }}>
+        <p style={{ fontFamily: "'Space Grotesk',sans-serif", color: t.muted, fontSize: 16, marginBottom: 28, lineHeight: 1.5 }}>
           Verify text claims with AI-powered evidence analysis
         </p>
 
@@ -62,17 +62,50 @@ export default function TextCheckPage({ t, setPage }) {
           value={claim} onChange={e => setClaim(e.target.value)}
           placeholder={'Enter a claim to fact-check...\n\nExample: "The Great Wall of China is visible from space."'}
           style={{
-            width: "100%", height: 200, background: t.input, border: `1px solid ${t.border}`,
-            borderRadius: 12, padding: "16px 18px", color: t.text, fontSize: 14, lineHeight: 1.7,
+            width: "100%", height: 190, background: t.input, border: `1px solid ${t.border}`,
+            borderRadius: 14, padding: "18px 20px", color: t.text, fontSize: 16, lineHeight: 1.7,
             resize: "vertical", outline: "none", fontFamily: "'Space Grotesk',sans-serif",
-            boxSizing: "border-box", transition: "border-color .25s",
+            boxSizing: "border-box", transition: "border-color .25s, box-shadow .25s",
+            backdropFilter: "blur(10px)",
           }}
-          onFocus={e => (e.target.style.borderColor = t.accent)}
-          onBlur={e => (e.target.style.borderColor = t.border)}
+          onFocus={e => { e.target.style.borderColor = t.accent; e.target.style.boxShadow = `0 0 16px ${t.glow}`; }}
+          onBlur={e => { e.target.style.borderColor = t.border; e.target.style.boxShadow = "none"; }}
         />
+
+        {/* Quick sample chips */}
+        <div style={{ marginTop: 14, marginBottom: 18 }}>
+          <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, color: t.muted, letterSpacing: ".14em", marginBottom: 10, fontWeight: 700 }}>
+            TRY A SAMPLE CLAIM:
+          </div>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            {[
+              "The Great Wall of China is visible from space with the naked eye.",
+              "Drinking 8 glasses of water daily is medically proven mandatory.",
+              "Python was named after the comedy group Monty Python."
+            ].map((sample, idx) => (
+              <button
+                key={idx}
+                type="button"
+                onClick={() => setClaim(sample)}
+                style={{
+                  fontFamily: "'Space Grotesk',sans-serif", fontSize: 13,
+                  padding: "8px 14px", borderRadius: 20,
+                  background: t.card, border: `1px solid ${t.border}`,
+                  color: t.muted, cursor: "pointer", transition: "all .2s",
+                  textAlign: "left"
+                }}
+                onMouseEnter={e => { e.currentTarget.style.borderColor = t.accent; e.currentTarget.style.color = t.text; }}
+                onMouseLeave={e => { e.currentTarget.style.borderColor = t.border; e.currentTarget.style.color = t.muted; }}
+              >
+                "{sample.slice(0, 42)}..."
+              </button>
+            ))}
+          </div>
+        </div>
+
         <Btn t={t} sz="lg" onClick={runTextCheck} disabled={!claim.trim() || analyzing}
-          style={{ width: "100%", justifyContent: "center", marginTop: 14 }}
-          icon={<Ic.Search s={16} />}
+          style={{ width: "100%", justifyContent: "center", marginTop: 4 }}
+          icon={<Ic.Search s={18} />}
         >
           {analyzing ? "Checking…" : "Verify Claim"}
         </Btn>
@@ -81,13 +114,13 @@ export default function TextCheckPage({ t, setPage }) {
         {analyzing && (
           <div style={{ marginTop: 20 }}>
             <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
-              <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, color: t.muted, letterSpacing: ".1em" }}>AI verifying claim…</span>
+              <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 12, color: t.muted, letterSpacing: ".1em" }}>AI verifying claim…</span>
             </div>
             <Scanner t={t} />
             <div style={{ display: "flex", gap: 8, marginTop: 12, flexWrap: "wrap" }}>
               {LOADING_STEPS.map((s, i) => (
                 <span key={s} style={{
-                  fontFamily: "'DM Mono',monospace", fontSize: 10, padding: "4px 10px", borderRadius: 20,
+                  fontFamily: "'DM Mono',monospace", fontSize: 11, padding: "5px 12px", borderRadius: 20,
                   letterSpacing: ".06em", color: t.accent, background: t.accent + "10",
                   border: `1px solid ${t.accent}30`, transition: "all .35s",
                   animation: `floatGlow 1.5s ${i * 0.3}s ease-in-out infinite`,
@@ -107,7 +140,7 @@ export default function TextCheckPage({ t, setPage }) {
             display: "flex", alignItems: "flex-start", gap: 10,
           }}>
             <Ic.Alert s={16} />
-            <span style={{ fontFamily: "'Space Grotesk',sans-serif", fontSize: 13, color: "#f87171", lineHeight: 1.5 }}>{error}</span>
+            <span style={{ fontFamily: "'Space Grotesk',sans-serif", fontSize: 14, color: "#f87171", lineHeight: 1.5 }}>{error}</span>
           </div>
         )}
       </div>
@@ -118,8 +151,8 @@ export default function TextCheckPage({ t, setPage }) {
         {/* Empty state */}
         {!result && !analyzing && !error && (
           <div style={{ textAlign: "center", paddingTop: 100, color: t.faint }}>
-            <Ic.Shield s={52} />
-            <p style={{ marginTop: 16, fontFamily: "'Space Grotesk',sans-serif", fontSize: 15, lineHeight: 1.7 }}>
+            <Ic.Shield s={58} />
+            <p style={{ marginTop: 18, fontFamily: "'Space Grotesk',sans-serif", fontSize: 17, lineHeight: 1.7 }}>
               Enter a claim and verify<br />to see results here
             </p>
           </div>
@@ -134,22 +167,22 @@ export default function TextCheckPage({ t, setPage }) {
               opacity: rVis ? 1 : 0, transform: rVis ? "translateY(0)" : "translateY(28px)",
               transition: "all .9s cubic-bezier(0.16,1,0.3,1)",
             }}>
-              <TrustGauge score={result.confidence ?? 0} t={t} />
+              <TrustGauge score={result.confidence ?? 0} verdict={result.verdict} t={t} />
             </TiltCard>
 
             {/* Verdict + Explanation */}
             <TiltCard t={t} style={{
-              padding: 24, marginBottom: 16,
+              padding: 26, marginBottom: 16,
               opacity: rVis ? 1 : 0, transform: rVis ? "translateY(0)" : "translateY(28px)",
               transition: "all .9s .1s cubic-bezier(0.16,1,0.3,1)",
             }}>
               <h4 style={{
-                fontFamily: "'Bebas Neue',sans-serif", fontSize: 20, letterSpacing: ".08em",
-                color: t.text, marginBottom: 16, display: "flex", alignItems: "center", gap: 10,
+                fontFamily: "'Bebas Neue',sans-serif", fontSize: 24, letterSpacing: ".08em",
+                color: t.text, marginBottom: 16, display: "flex", alignItems: "center", gap: 12,
               }}>
                 VERDICT
                 <span style={{
-                  padding: "3px 12px", borderRadius: 20, fontSize: 11, fontWeight: 700,
+                  padding: "4px 14px", borderRadius: 20, fontSize: 12, fontWeight: 700,
                   fontFamily: "'DM Mono',monospace",
                   background: verdictBg(result.verdict, t),
                   color: verdictColor(result.verdict, t),
@@ -160,8 +193,8 @@ export default function TextCheckPage({ t, setPage }) {
                 </span>
               </h4>
               <p style={{
-                fontFamily: "'Space Grotesk',sans-serif", fontSize: 14, color: t.muted,
-                lineHeight: 1.7, whiteSpace: "pre-wrap",
+                fontFamily: "'Space Grotesk',sans-serif", fontSize: 16, color: t.text,
+                lineHeight: 1.75, whiteSpace: "pre-wrap",
               }}>
                 {result.explanation}
               </p>
@@ -170,26 +203,26 @@ export default function TextCheckPage({ t, setPage }) {
             {/* Sources */}
             {result.sources && result.sources.length > 0 && (
               <TiltCard t={t} style={{
-                padding: 24, marginBottom: 16,
+                padding: 26, marginBottom: 16,
                 opacity: rVis ? 1 : 0, transform: rVis ? "translateY(0)" : "translateY(28px)",
                 transition: "all .9s .2s cubic-bezier(0.16,1,0.3,1)",
               }}>
-                <h4 style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 20, letterSpacing: ".08em", color: t.text, marginBottom: 16 }}>
+                <h4 style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 24, letterSpacing: ".08em", color: t.text, marginBottom: 16 }}>
                   SOURCES
                 </h4>
                 {result.sources.map((src, i) => (
                   <a
                     key={i} href={src} target="_blank" rel="noopener noreferrer" data-mag
                     style={{
-                      display: "flex", alignItems: "center", gap: 8, marginBottom: i < result.sources.length - 1 ? 12 : 0,
-                      fontFamily: "'DM Mono',monospace", fontSize: 12, color: t.accent,
-                      textDecoration: "none", transition: "opacity .2s", lineHeight: 1.5,
+                      display: "flex", alignItems: "center", gap: 10, marginBottom: i < result.sources.length - 1 ? 14 : 0,
+                      fontFamily: "'DM Mono',monospace", fontSize: 13, color: t.accent,
+                      textDecoration: "none", transition: "opacity .2s", lineHeight: 1.6,
                       wordBreak: "break-all",
                     }}
                     onMouseEnter={e => (e.currentTarget.style.opacity = ".7")}
                     onMouseLeave={e => (e.currentTarget.style.opacity = "1")}
                   >
-                    <Ic.Arr s={12} />
+                    <Ic.Arr s={14} />
                     {src}
                   </a>
                 ))}
@@ -197,7 +230,7 @@ export default function TextCheckPage({ t, setPage }) {
             )}
 
             {/* Download Report */}
-            <Btn t={t} sz="lg" icon={<Ic.Download s={16} />} onClick={handleDownload}
+            <Btn t={t} sz="lg" icon={<Ic.Download s={18} />} onClick={handleDownload}
               style={{ width: "100%", justifyContent: "center", marginTop: 4 }}
             >
               Download Report (PDF)
