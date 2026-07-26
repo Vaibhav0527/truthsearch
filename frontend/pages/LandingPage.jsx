@@ -408,13 +408,14 @@ export default function LandingPage({ setPage, t, isDark }) {
       <Marquee text="WHO DATABASE • SNOPES • REUTERS FACT CHECK • AP VERIFY • POLITIFACT • FULL FACT •" reverse t={t} speed={19} />
 
       {/* ══ CTA BANNER ══ */}
-      <section style={{ padding: "90px 60px 130px", position: "relative", zIndex: 1 }}>
-        <TiltCard t={t} glow style={{ maxWidth: 680, padding: "64px 56px", margin: "0 auto", textAlign: "center", background: isDark ? "linear-gradient(135deg,rgba(181,123,255,.09),rgba(109,40,217,.05))" : "linear-gradient(135deg,rgba(109,40,217,.07),rgba(181,123,255,.04))" }}>
-          <h2 style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 68, letterSpacing: ".04em", color: t.text, lineHeight: .95, marginBottom: 16 }}>Start detecting<br />misinformation</h2>
-          <p style={{ fontFamily: "'Space Grotesk',sans-serif", color: t.text, fontSize: 17, marginBottom: 36, lineHeight: 1.6 }}>Free to try. Instant real-time AI fact-checking across text, voice, and images.</p>
+      <section className="responsive-cta-section" style={{ padding: "90px 60px 130px", position: "relative", zIndex: 1 }}>
+        <TiltCard t={t} glow className="responsive-cta-card" style={{ maxWidth: 680, padding: "64px 56px", margin: "0 auto", textAlign: "center", background: isDark ? "linear-gradient(135deg,rgba(181,123,255,.09),rgba(109,40,217,.05))" : "linear-gradient(135deg,rgba(109,40,217,.07),rgba(181,123,255,.04))" }}>
+          <h2 className="responsive-cta-title" style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: "clamp(38px, 9vw, 68px)", letterSpacing: ".04em", color: t.text, lineHeight: .95, marginBottom: 16 }}>Start detecting<br />misinformation</h2>
+          <p style={{ fontFamily: "'Space Grotesk',sans-serif", color: t.text, fontSize: "clamp(14px, 3.5vw, 17px)", marginBottom: 36, lineHeight: 1.6 }}>Free to try. Instant real-time AI fact-checking across text, voice, and images.</p>
           <Btn t={t} sz="lg" onClick={() => setPage("factcheck")} icon={<Ic.Arr s={18} />}>Start Fact Checking Now</Btn>
         </TiltCard>
       </section>
+
 
       <Footer t={t} setPage={setPage} />
     </div>

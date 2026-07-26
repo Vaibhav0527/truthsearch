@@ -67,7 +67,7 @@
   -webkit-text-fill-color: transparent;
 }
 
-/* ══ RESPONSIVE OVERRIDES ══ */
+/* ══ RESPONSIVE OVERRIDES FOR ALL DEVICES ══ */
 @media (max-width: 1024px) {
   .hero-section-responsive {
     padding: 100px 24px 60px !important;
@@ -103,6 +103,13 @@
   .responsive-page-container {
     padding: 100px 24px 60px !important;
   }
+  .responsive-footer-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 32px !important;
+  }
+  .responsive-footer-padding {
+    padding: 48px 32px 24px !important;
+  }
 }
 
 @media (max-width: 960px) {
@@ -119,7 +126,7 @@
     padding: 84px 16px 40px !important;
   }
   .hero-title-responsive {
-    font-size: clamp(52px, 15vw, 110px) !important;
+    font-size: clamp(48px, 14vw, 110px) !important;
   }
   .hero-subtitle-responsive {
     font-size: 15px !important;
@@ -152,6 +159,23 @@
   }
   .responsive-text-sm {
     font-size: 13px !important;
+  }
+
+  .responsive-footer-grid {
+    grid-template-columns: 1fr !important;
+    gap: 28px !important;
+  }
+  .responsive-footer-padding {
+    padding: 40px 16px 24px !important;
+  }
+  .responsive-cta-section {
+    padding: 60px 16px 80px !important;
+  }
+  .responsive-cta-card {
+    padding: 40px 20px !important;
+  }
+  .responsive-cta-title {
+    font-size: clamp(40px, 10vw, 68px) !important;
   }
 
   canvas {

@@ -65,7 +65,7 @@ export default function Footer({ t: _t, setPage, style }) {
   };
 
   return (
-    <footer style={{
+    <footer className="responsive-footer-padding" style={{
       position: "relative",
       borderTop: `1px solid ${t.line}`,
       padding: "60px 60px 36px",
@@ -128,12 +128,13 @@ export default function Footer({ t: _t, setPage, style }) {
       </div>
 
       {/* Link Columns */}
-      <div style={{
+      <div className="responsive-footer-grid" style={{
         display: "grid",
         gridTemplateColumns: "1.8fr 1fr 1fr 1fr",
         gap: 48,
         marginBottom: 48,
       }}>
+
         {/* Brand Column */}
         <div>
           <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16, cursor: "pointer" }} onClick={goHome}>
