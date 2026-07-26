@@ -9,6 +9,7 @@
     @apply antialiased text-slate-100 bg-[#06060e];
     font-family: 'Space Grotesk', sans-serif;
     overflow-x: hidden;
+    width: 100vw;
   }
 }
 
@@ -63,11 +64,11 @@
   -webkit-text-fill-color: transparent;
 }
 
-/* ══ RESPONSIVE OVERRIDES ══ */
+/* ══ FULLY RESPONSIVE MEDIA QUERIES ══ */
 @media (max-width: 1024px) {
   .responsive-hero-layout {
     flex-direction: column !important;
-    gap: 40px !important;
+    gap: 36px !important;
   }
   .responsive-hero-left {
     flex: 1 1 100% !important;
@@ -92,6 +93,18 @@
   .responsive-section-padding {
     padding: 60px 24px !important;
   }
+  .responsive-page-container {
+    padding: 100px 24px 60px !important;
+  }
+}
+
+@media (max-width: 960px) {
+  .desktop-nav-links {
+    display: none !important;
+  }
+  .navbar-container {
+    padding: 0 16px !important;
+  }
 }
 
 @media (max-width: 640px) {
@@ -104,7 +117,16 @@
   .responsive-section-padding {
     padding: 40px 16px !important;
   }
+  .responsive-page-container {
+    padding: 90px 16px 40px !important;
+  }
   .responsive-hide-mobile {
     display: none !important;
+  }
+  .responsive-text-sm {
+    font-size: 13px !important;
+  }
+  .responsive-title-clamp {
+    font-size: clamp(36px, 10vw, 64px) !important;
   }
 }

@@ -373,7 +373,8 @@ export default function HistoryPage({ t, setPage }) {
   ];
 
   return (
-    <div style={{ paddingTop: 84, minHeight: "100vh", padding: "90px 60px", position: "relative", zIndex: 1 }}>
+    <div className="responsive-page-container" style={{ paddingTop: 84, minHeight: "100vh", padding: "90px 60px", position: "relative", zIndex: 1 }}>
+
 
       {/* MODAL */}
       <DetailModal

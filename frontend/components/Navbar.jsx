@@ -30,7 +30,7 @@ export default function Navbar({ page, setPage, isDark, toggleTheme, t, menuOpen
         t={t}
         setPage={setPage}
       />
-      <nav style={{
+      <nav className="navbar-container" style={{
         position: "fixed", top: 0, left: 0, right: 0, zIndex: 8000, height: 84,
         background: scrolled || menuOpen ? (isDark ? "rgba(6,6,14,.88)" : "rgba(246,243,239,.9)") : "rgba(6,6,14,.4)",
         backdropFilter: "blur(28px) saturate(180%)",
@@ -51,11 +51,12 @@ export default function Navbar({ page, setPage, isDark, toggleTheme, t, menuOpen
           <span style={{ fontFamily: "'Bebas Neue',sans-serif", fontWeight: 400, fontSize: 32, color: t.text, letterSpacing: ".12em", display: "flex", alignItems: "center" }}>
             TRUTH<span style={{ color: t.accent, textShadow: `0 0 16px ${t.accent}80` }}>LENS</span>
           </span>
-          <span style={{ fontSize: 9, background: `linear-gradient(135deg, ${t.accent}, #7c3aed)`, color: "#fff", padding: "2px 8px", borderRadius: 4, letterSpacing: ".15em", fontWeight: 700, fontFamily: "'DM Mono',monospace", boxShadow: `0 0 12px ${t.glow}` }}>PRO AI</span>
+          <span className="responsive-hide-mobile" style={{ fontSize: 9, background: `linear-gradient(135deg, ${t.accent}, #7c3aed)`, color: "#fff", padding: "2px 8px", borderRadius: 4, letterSpacing: ".15em", fontWeight: 700, fontFamily: "'DM Mono',monospace", boxShadow: `0 0 12px ${t.glow}` }}>PRO AI</span>
         </div>
 
-        {/* Inline Navigation Links */}
-        <div style={{ display: "flex", alignItems: "center", gap: 6, background: isDark ? "rgba(255,255,255,.03)" : "rgba(0,0,0,.03)", padding: "4px 6px", borderRadius: 12, border: `1px solid ${t.line}` }}>
+        {/* Inline Navigation Links (Desktop Only) */}
+        <div className="desktop-nav-links" style={{ display: "flex", alignItems: "center", gap: 6, background: isDark ? "rgba(255,255,255,.03)" : "rgba(0,0,0,.03)", padding: "4px 6px", borderRadius: 12, border: `1px solid ${t.line}` }}>
+
           {NAV_LINKS.map(link => {
             const active = page === link.id;
             return (

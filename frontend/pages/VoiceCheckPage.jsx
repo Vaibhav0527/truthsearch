@@ -133,10 +133,11 @@ export default function VoiceCheckPage({ t, setPage }) {
   });
 
   return (
-    <div style={{ paddingTop: 84, minHeight: "100vh", display: "grid", gridTemplateColumns: "1fr 1fr", position: "relative", zIndex: 1 }}>
+    <div className="responsive-grid-4" style={{ paddingTop: 84, minHeight: "100vh", display: "grid", gridTemplateColumns: "1fr 1fr", position: "relative", zIndex: 1 }}>
 
       {/* ───── LEFT: INPUT PANEL ───── */}
-      <div style={{ borderRight: `1px solid ${t.line}`, padding: "52px 48px", overflowY: "auto", maxHeight: "calc(100vh - 68px)" }}>
+      <div className="responsive-section-padding" style={{ borderRight: `1px solid ${t.line}`, padding: "52px 48px", overflowY: "auto" }}>
+
         <button onClick={() => setPage("landing")} data-mag style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "6px 14px", borderRadius: 8, border: `1px solid ${t.border}`, background: "transparent", color: t.muted, fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: ".08em", cursor: "pointer", transition: "all .25s", marginBottom: 20 }} onMouseEnter={e => { e.currentTarget.style.color = t.accent; e.currentTarget.style.borderColor = t.accent + "50"; }} onMouseLeave={e => { e.currentTarget.style.color = t.muted; e.currentTarget.style.borderColor = t.border; }}><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="19 12 5 12" /><polyline points="12 19 5 12 12 5" /></svg>BACK</button>
         <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 48, letterSpacing: ".03em", color: t.text, lineHeight: .95, marginBottom: 8 }}>
           Voice<br />Fact Check
