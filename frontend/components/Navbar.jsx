@@ -86,25 +86,26 @@ export default function Navbar({ page, setPage, isDark, toggleTheme, t, menuOpen
         </div>
 
         {/* Right controls */}
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+        <div className="navbar-right-controls" style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
           {/* Quick Search Button */}
           <button
             onClick={() => setQuickSearchOpen(true)}
             data-mag
+            className="navbar-search-btn"
             style={{
-              display: "flex", alignItems: "center", gap: 8,
-              padding: "8px 14px", borderRadius: 10,
+              display: "flex", alignItems: "center", gap: 6,
+              padding: "8px 12px", borderRadius: 10,
               background: isDark ? "rgba(255,255,255,.04)" : "rgba(0,0,0,.04)",
               border: `1px solid ${t.border}`, color: t.muted, cursor: "pointer",
               fontFamily: "'DM Mono',monospace", fontSize: 11, fontWeight: 700,
-              transition: "all .3s ease"
+              transition: "all .3s ease", flexShrink: 0
             }}
             onMouseEnter={e => { e.currentTarget.style.borderColor = t.accent; e.currentTarget.style.color = t.text; }}
             onMouseLeave={e => { e.currentTarget.style.borderColor = t.border; e.currentTarget.style.color = t.muted; }}
           >
             <Ic.Search s={14} />
-            <span>Search</span>
-            <span style={{ fontSize: 9, background: t.accent + "20", color: t.accent, padding: "2px 6px", borderRadius: 4, border: `1px solid ${t.accent}30` }}>
+            <span className="responsive-hide-mobile">Search</span>
+            <span className="responsive-hide-mobile" style={{ fontSize: 9, background: t.accent + "20", color: t.accent, padding: "2px 6px", borderRadius: 4, border: `1px solid ${t.accent}30` }}>
               ⌘K
             </span>
           </button>
@@ -113,7 +114,7 @@ export default function Navbar({ page, setPage, isDark, toggleTheme, t, menuOpen
             onClick={toggleTheme}
             data-mag
             style={{
-              width: 42, height: 42, borderRadius: 10,
+              width: 38, height: 38, borderRadius: 10, flexShrink: 0,
               background: isDark ? "rgba(255,255,255,.04)" : "rgba(0,0,0,.04)",
               border: `1px solid ${t.border}`, color: t.text, cursor: "pointer",
               display: "flex", alignItems: "center", justifyContent: "center",
@@ -122,11 +123,13 @@ export default function Navbar({ page, setPage, isDark, toggleTheme, t, menuOpen
             onMouseEnter={e => { e.currentTarget.style.borderColor = t.accent; e.currentTarget.style.boxShadow = `0 0 14px ${t.glow}`; }}
             onMouseLeave={e => { e.currentTarget.style.borderColor = t.border; e.currentTarget.style.boxShadow = "none"; }}
           >
-            {isDark ? <Ic.Sun s={18} /> : <Ic.Moon s={18} />}
+            {isDark ? <Ic.Sun s={16} /> : <Ic.Moon s={16} />}
           </button>
+
           <Hamburger open={menuOpen} onToggle={onMenuToggle} t={t} />
         </div>
       </nav>
+
     </>
   );
 }

@@ -65,10 +65,11 @@ export default function Hamburger({ open, onToggle, t }) {
         data-mag
         style={{
           position: "relative",
-          width: 50, height: 50,
+          width: 44, height: 44,
+          flexShrink: 0,
           background: bgClr,
           border: `1px solid ${borderClr}`,
-          borderRadius: 6,
+          borderRadius: 8,
           cursor: "pointer",
           display: "flex",
           alignItems: "center",
@@ -76,8 +77,10 @@ export default function Hamburger({ open, onToggle, t }) {
           overflow: "hidden",
           transition: "all .4s cubic-bezier(0.16, 1, 0.3, 1)",
           boxShadow: shadowClr,
+          zIndex: 9000,
         }}
       >
+
         {/* Scanline overlay */}
         <div style={{
           position: "absolute", inset: 0, pointerEvents: "none", overflow: "hidden",
