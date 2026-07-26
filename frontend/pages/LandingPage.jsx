@@ -116,7 +116,8 @@ export default function LandingPage({ setPage, t, isDark }) {
     <div style={{ paddingTop: 84, minHeight: "100vh", position: "relative", zIndex: 1 }}>
 
       {/* ══ HERO ══ */}
-      <section ref={ref} style={{ minHeight: "100vh", display: "flex", flexDirection: "column", justifyContent: "center", padding: "120px 60px 80px", position: "relative", overflow: "hidden" }}>
+      <section ref={ref} className="hero-section-responsive" style={{ minHeight: "100vh", display: "flex", flexDirection: "column", justifyContent: "center", padding: "120px 60px 80px", position: "relative", overflow: "hidden" }}>
+
 
         {/* Full-bleed perspective grid */}
         <div style={{ position: "absolute", inset: 0, backgroundImage: `linear-gradient(rgba(181,123,255,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(181,123,255,.04) 1px,transparent 1px)`, backgroundSize: "80px 80px", pointerEvents: "none", animation: "gridPulse 6s ease-in-out infinite" }} />
@@ -129,16 +130,14 @@ export default function LandingPage({ setPage, t, isDark }) {
 
         {/* Top status bar */}
         <RevealLine inView={vis} delay={.04}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 56, fontFamily: "'DM Mono',monospace", fontSize: 11, color: t.muted, letterSpacing: ".25em", borderBottom: `1px solid ${t.line}`, paddingBottom: 18 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
+          <div className="hero-status-bar" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 56, fontFamily: "'DM Mono',monospace", fontSize: 11, color: t.muted, letterSpacing: ".25em", borderBottom: `1px solid ${t.line}`, paddingBottom: 18 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
               <span style={{ color: t.hi, display: "flex", alignItems: "center", gap: 8, fontWeight: 700 }}>
                 <span style={{ width: 8, height: 8, borderRadius: "50%", background: t.hi, display: "inline-block", animation: "statusBlink 2.5s ease-in-out infinite" }} />
                 SYSTEM ONLINE
               </span>
-              <span>│</span>
+              <span className="responsive-hide-mobile">│</span>
               <span>POWERED BY LLAMA-3 & TAVILY</span>
-              <span>│</span>
-              <span>LIVE WEB SEARCH</span>
             </div>
             <span style={{ color: t.accent, fontWeight: 700 }}>TRUTHLENS VERIFICATION ENGINE</span>
           </div>
@@ -155,17 +154,16 @@ export default function LandingPage({ setPage, t, isDark }) {
               </div>
             </RevealLine>
 
-
             <SplitReveal text="TRUTH" inView={vis} delay={.1}
-              style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: "clamp(100px,14vw,192px)", letterSpacing: ".02em", lineHeight: .88, color: t.text, overflow: "visible", marginBottom: 4, filter: vis ? "none" : "blur(8px)", transition: "filter 1s .1s" }} />
+              style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: "clamp(64px,14vw,192px)", letterSpacing: ".02em", lineHeight: .88, color: t.text, overflow: "visible", marginBottom: 4, filter: vis ? "none" : "blur(8px)", transition: "filter 1s .1s" }} />
 
             <div style={{ height: 2, width: vis ? "100%" : "0", maxWidth: 500, background: `linear-gradient(to right,${t.accent},rgba(181,123,255,.2))`, margin: "8px 0", transition: "width 1s .32s cubic-bezier(0.16,1,0.3,1)" }} />
 
             <SplitReveal text="LENS" inView={vis} delay={.28}
-              style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: "clamp(100px,14vw,192px)", letterSpacing: ".02em", lineHeight: .88, WebkitTextStroke: `1.5px ${t.accent}`, color: "transparent", overflow: "visible", marginBottom: 36, textShadow: `0 0 60px ${t.accent}30` }} />
+              style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: "clamp(64px,14vw,192px)", letterSpacing: ".02em", lineHeight: .88, WebkitTextStroke: `1.5px ${t.accent}`, color: "transparent", overflow: "visible", marginBottom: 36, textShadow: `0 0 60px ${t.accent}30` }} />
 
             <RevealLine inView={vis} delay={.46}>
-              <p style={{ fontFamily: "'Space Grotesk',sans-serif", fontSize: "clamp(18px,2.2vw,22px)", color: t.muted, lineHeight: 1.75, maxWidth: 540, marginBottom: 36 }}>
+              <p className="hero-subtitle-responsive" style={{ fontFamily: "'Space Grotesk',sans-serif", fontSize: "clamp(16px,2.2vw,22px)", color: t.muted, lineHeight: 1.65, maxWidth: 540, marginBottom: 36 }}>
                 Don't just know it's fake.&nbsp;
                 <span style={{ color: t.text, fontWeight: 700, fontStyle: "italic" }}>Know exactly why.</span>
                 &nbsp;Explainable AI verdicts across text claims, voice audio, and images with forensic precision.
@@ -182,7 +180,7 @@ export default function LandingPage({ setPage, t, isDark }) {
                 <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, color: t.accent, letterSpacing: ".14em", marginBottom: 10, fontWeight: 700 }}>
                   ⚡ TEST THE AI FACT-CHECKER INSTANTLY:
                 </div>
-                <div style={{ display: "flex", gap: 10, marginBottom: 12 }}>
+                <div className="hero-input-row" style={{ display: "flex", gap: 10, marginBottom: 12 }}>
                   <input
                     value={heroClaim}
                     onChange={e => setHeroClaim(e.target.value)}
@@ -209,6 +207,7 @@ export default function LandingPage({ setPage, t, isDark }) {
                 </div>
 
                 {/* Sample claim chips */}
+
                 <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                   {[
                     "Water boils at 100 degrees Celsius",
