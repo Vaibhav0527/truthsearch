@@ -43,3 +43,5 @@ coverage/
 *.njsproj
 *.sln
 *.sw?
+
+.vercel

@@ -145,15 +145,16 @@ export default function LandingPage({ setPage, t, isDark }) {
         </RevealLine>
 
         {/* Main Hero layout */}
-        <div style={{ display: "flex", alignItems: "center", gap: 60, position: "relative", zIndex: 2 }}>
+        <div className="responsive-hero-layout" style={{ display: "flex", alignItems: "center", gap: 60, position: "relative", zIndex: 2 }}>
           {/* Left: Text & Interactive Live Demo */}
-          <div style={{ flex: "0 0 55%", position: "relative", zIndex: 2 }}>
+          <div className="responsive-hero-left" style={{ flex: "0 0 55%", position: "relative", zIndex: 2 }}>
             <RevealLine inView={vis} delay={.08}>
               <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 24 }}>
                 <div style={{ width: 36, height: 1.5, background: t.accent }} />
                 <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, letterSpacing: ".35em", color: t.accent, fontWeight: 700 }}>REAL-TIME MISINFORMATION DETECTION</span>
               </div>
             </RevealLine>
+
 
             <SplitReveal text="TRUTH" inView={vis} delay={.1}
               style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: "clamp(100px,14vw,192px)", letterSpacing: ".02em", lineHeight: .88, color: t.text, overflow: "visible", marginBottom: 4, filter: vis ? "none" : "blur(8px)", transition: "filter 1s .1s" }} />
@@ -274,7 +275,7 @@ export default function LandingPage({ setPage, t, isDark }) {
           </div>
 
           {/* Right: HUD-framed WebGL Neural Visualizer */}
-          <div style={{ flex: "0 0 45%", paddingLeft: 20, opacity: vis ? 1 : 0, transform: vis ? "translateY(0)" : "translateY(40px)", transition: "opacity 1.2s .7s, transform 1.2s .7s cubic-bezier(0.16,1,0.3,1)", position: "relative" }}>
+          <div className="responsive-hero-right" style={{ flex: "0 0 45%", paddingLeft: 20, opacity: vis ? 1 : 0, transform: vis ? "translateY(0)" : "translateY(40px)", transition: "opacity 1.2s .7s, transform 1.2s .7s cubic-bezier(0.16,1,0.3,1)", position: "relative" }}>
             <div style={{ position: "relative" }}>
               <div style={{ position: "absolute", top: -14, left: -14, right: -14, bottom: -14, borderRadius: 24, border: `1px solid rgba(181,123,255,.15)`, pointerEvents: "none", animation: "framePulse 3s ease-in-out infinite" }} />
               <div style={{ position: "absolute", top: -5, left: -5, width: 18, height: 18, borderTop: `2px solid ${t.accent}`, borderLeft: `2px solid ${t.accent}`, borderRadius: "2px 0 0 0", pointerEvents: "none" }} />
@@ -307,9 +308,8 @@ export default function LandingPage({ setPage, t, isDark }) {
         </RevealLine>
       </section>
 
-
       {/* Stats bar */}
-      <div ref={sRef} style={{ borderTop: `1px solid ${t.line}`, borderBottom: `1px solid ${t.line}`, display: "flex", padding: "0 60px" }}>
+      <div ref={sRef} className="responsive-stats-bar" style={{ borderTop: `1px solid ${t.line}`, borderBottom: `1px solid ${t.line}`, display: "flex", padding: "0 60px" }}>
         {stats.map((s, i) => (
           <div key={s.l} style={{ flex: 1, padding: "32px 0", borderRight: i < stats.length - 1 ? `1px solid ${t.line}` : "none", textAlign: "center", opacity: sVis ? 1 : 0, transform: sVis ? "translateY(0)" : "translateY(20px)", transition: `all .8s ${i * .08}s cubic-bezier(0.16,1,0.3,1)` }}>
             <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 52, letterSpacing: ".04em", color: t.accent, lineHeight: 1 }}>{s.v}</div>
@@ -321,7 +321,7 @@ export default function LandingPage({ setPage, t, isDark }) {
       <Marquee text="TEXT ANALYSIS • VOICE DETECTION • IMAGE VERIFICATION • EXPLAINABLE AI • FACT CHECKING •" t={t} />
 
       {/* ══ CAPABILITIES FEATURE GRID ══ */}
-      <section ref={fRef} style={{ padding: "100px 60px", position: "relative", zIndex: 1 }}>
+      <section ref={fRef} className="responsive-section-padding" style={{ padding: "100px 60px", position: "relative", zIndex: 1 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 56 }}>
           <div style={{ width: 44, height: 1.5, background: t.accent }} />
           <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 12, letterSpacing: ".35em", color: t.accent, fontWeight: 700 }}>CAPABILITIES</span>
@@ -333,7 +333,7 @@ export default function LandingPage({ setPage, t, isDark }) {
             </h2>
           </div>
         </div>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 0, border: `1px solid ${t.line}` }}>
+        <div className="responsive-grid-4" style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 0, border: `1px solid ${t.line}` }}>
           {feats.map((f, i) => (
             <FeatureCell key={f.title} f={f} i={i} total={feats.length} t={t} fVis={fVis} />
           ))}
@@ -341,7 +341,7 @@ export default function LandingPage({ setPage, t, isDark }) {
       </section>
 
       {/* ══ WORKFLOW PIPELINE ══ */}
-      <section ref={wRef} style={{ padding: "80px 60px 100px", position: "relative", zIndex: 1, borderTop: `1px solid ${t.line}` }}>
+      <section ref={wRef} className="responsive-section-padding" style={{ padding: "80px 60px 100px", position: "relative", zIndex: 1, borderTop: `1px solid ${t.line}` }}>
         <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 44 }}>
           <div style={{ width: 44, height: 1.5, background: t.accent }} />
           <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 12, letterSpacing: ".35em", color: t.accent, fontWeight: 700 }}>HOW IT WORKS</span>
@@ -350,8 +350,9 @@ export default function LandingPage({ setPage, t, isDark }) {
           The Forensic Verification Pipeline
         </h2>
 
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 24 }}>
+        <div className="responsive-grid-4" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 24 }}>
           {steps.map((st, idx) => (
+
             <TiltCard key={st.num} t={t} style={{
               padding: 30, position: "relative",
               opacity: wVis ? 1 : 0, transform: wVis ? "translateY(0)" : "translateY(28px)",
