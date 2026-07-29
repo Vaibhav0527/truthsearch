@@ -45,4 +45,9 @@ def get_evidence(query: str) -> str:
     if not blocks:
         return "No relevant web evidence found for this claim."
 
-    return "\n---\n".join(blocks)
+    evidence_text = "\n---\n".join(blocks)
+    max_chars = 4000
+    if len(evidence_text) > max_chars:
+        evidence_text = evidence_text[:max_chars] + "\n...[truncated due to length]"
+    
+    return evidence_text
