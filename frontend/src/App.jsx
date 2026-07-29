@@ -88,6 +88,7 @@ const App = () => {
     setMenuOpen(false);
     setTimeout(() => {
       nav(pageToRoute[page] || "/");
+      window.scrollTo(0, 0);
       setWiping(false);
     }, 400);
   }, [currentPage, nav]);

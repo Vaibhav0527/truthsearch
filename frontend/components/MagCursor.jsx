@@ -29,7 +29,7 @@ export default function MagCursor({ t }) {
     return () => { cancelAnimationFrame(raf); window.removeEventListener("mousemove", onM); window.removeEventListener("mouseover", onO); window.removeEventListener("mousedown", onD); window.removeEventListener("mouseup", onU); };
   }, [t]);
   return <>
-    <div ref={dot} style={{ position: "fixed", top: 0, left: 0, zIndex: 10002, width: 10, height: 10, borderRadius: "50%", background: t.accent, pointerEvents: "none", willChange: "transform", boxShadow: `0 0 14px ${t.glow}`, transition: "transform .04s" }} />
-    <div ref={ring} style={{ position: "fixed", top: 0, left: 0, zIndex: 10001, width: 44, height: 44, borderRadius: "50%", border: "1.5px solid rgba(181,123,255,.6)", pointerEvents: "none", willChange: "transform", transition: "opacity .3s, border-color .3s, transform .1s cubic-bezier(.17,.67,.83,.67)", mixBlendMode: "difference" }} />
+    <div ref={dot} style={{ position: "fixed", top: 0, left: 0, zIndex: 10002, width: 10, height: 10, borderRadius: "50%", background: t.accent, pointerEvents: "none", willChange: "transform", boxShadow: `0 0 14px ${t.glow}` }} />
+    <div ref={ring} style={{ position: "fixed", top: 0, left: 0, zIndex: 10001, width: 44, height: 44, borderRadius: "50%", border: "1.5px solid rgba(181,123,255,.6)", pointerEvents: "none", willChange: "transform", transition: "opacity .3s, border-color .3s", mixBlendMode: "difference" }} />
   </>;
 }
