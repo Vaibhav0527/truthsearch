@@ -1,5 +1,10 @@
 {
   "dependencies": {
     "react-redux": "^9.2.0"
+  },
+  "scripts": {
+    "build": "cd backend && npm install",
+    "start": "cd backend && node index.js",
+    "dev": "cd backend && node index.js"
   }
 }
