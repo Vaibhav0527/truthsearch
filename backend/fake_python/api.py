@@ -171,6 +171,8 @@ async def voice_check(file: UploadFile, language: str = Form(default="auto")):
         whisper_kwargs = {
             "model": "whisper-large-v3",
             "response_format": "verbose_json",  # gives us detected language
+            "temperature": 0.0,
+            "prompt": "TruthLens fact checking application. Accurate transcription of facts, claims, and debate statements. Context provided to avoid hallucinations.",
         }
         # If user picked a specific language, hint Whisper for better accuracy
         if lang_code != "auto" and lang_code in WHISPER_LANGS:
