@@ -11,7 +11,7 @@ from verifier_chain import build_verifier_chain
 from fastapi.middleware.cors import CORSMiddleware
 from groq import Groq
 from groq import Groq
-from openai import OpenAI
+import requests
 from gtts import gTTS
 from pathlib import Path
 
@@ -36,18 +36,9 @@ class ClaimRequest(BaseModel):
 chain = build_verifier_chain()
 groq_client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 
-openai_key = os.getenv("OPENAI_API_KEY")
-if openai_key and openai_key.startswith("github_pat_"):
-    openai_client = OpenAI(
-        api_key=openai_key,
-        base_url="https://models.inference.ai.azure.com",
-    )
-elif openai_key:
-    openai_client = OpenAI(
-        api_key=openai_key,
-    )
-else:
-    openai_client = None
+groq_client = Groq(api_key=os.getenv("GROQ_API_KEY"))
+
+gemini_key = os.getenv("GEMINI_API_KEY") or os.getenv("OPENAI_API_KEY")
 
 @app.post("/fact-check")
 def fact_check(request: ClaimRequest):
@@ -68,8 +59,8 @@ def fact_check(request: ClaimRequest):
 
 @app.post("/ocr")
 async def extract_text(file: UploadFile):
-    if not openai_client:
-        raise HTTPException(status_code=500, detail="OpenAI API client is not configured. Please check your OPENAI_API_KEY in backend/.env")
+    if not gemini_key:
+        raise HTTPException(status_code=500, detail="Gemini API key is not configured. Please add GEMINI_API_KEY or OPENAI_API_KEY to your .env file.")
 
     # Check if the file is actually an image
     if not file.content_type.startswith("image/"):
@@ -80,28 +71,35 @@ async def extract_text(file: UploadFile):
         img_b64 = base64.b64encode(image_bytes).decode("utf-8")
         mime = file.content_type or "image/jpeg"
 
-        # OCR using OpenAI Vision
-        response = openai_client.chat.completions.create(
-            model="gpt-4o",
-            temperature=0.1,
-            max_tokens=1000,
-            messages=[
-                {
-                    "role": "user",
-                    "content": [
-                        {"type": "text", "text": "Extract all readable text from this image. Output ONLY the extracted text. If there is no text, output nothing."},
-                        {
-                            "type": "image_url",
-                            "image_url": {
-                                "url": f"data:{mime};base64,{img_b64}"
-                            }
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={gemini_key}"
+        payload = {
+            "contents": [{
+                "parts": [
+                    {"text": "Extract all readable text from this image. Output ONLY the extracted text. If there is no text, output nothing."},
+                    {
+                        "inlineData": {
+                            "mimeType": mime,
+                            "data": img_b64
                         }
-                    ]
-                }
-            ]
-        )
-
-        text = response.choices[0].message.content.strip()
+                    }
+                ]
+            }],
+            "generationConfig": {
+                "temperature": 0.1,
+                "maxOutputTokens": 1000,
+            }
+        }
+        
+        response = requests.post(url, json=payload)
+        
+        if response.status_code != 200:
+            raise HTTPException(status_code=500, detail=f"Gemini API Error: {response.text}")
+            
+        data = response.json()
+        try:
+            text = data["candidates"][0]["content"]["parts"][0]["text"].strip()
+        except (KeyError, IndexError):
+            text = ""
 
         if not text:
             raise ValueError("No text could be extracted from the image.")
@@ -274,8 +272,8 @@ Respond ONLY with the JSON object."""
 
 @app.post("/detect-ai-image")
 async def detect_ai_image(file: UploadFile):
-    if not openai_client:
-        raise HTTPException(status_code=500, detail="OpenAI API client is not configured. Please check your OPENAI_API_KEY in backend/.env")
+    if not gemini_key:
+        raise HTTPException(status_code=500, detail="Gemini API key is not configured. Please add GEMINI_API_KEY or OPENAI_API_KEY to your .env file.")
 
     if not file.content_type or not file.content_type.startswith("image/"):
         raise HTTPException(status_code=400, detail="File must be an image")
@@ -285,27 +283,35 @@ async def detect_ai_image(file: UploadFile):
         img_b64 = base64.b64encode(image_bytes).decode("utf-8")
         mime = file.content_type or "image/jpeg"
 
-        response = openai_client.chat.completions.create(
-            model="gpt-4o",
-            temperature=0.1,
-            max_tokens=1000,
-            messages=[
-                {
-                    "role": "user",
-                    "content": [
-                        {"type": "text", "text": IMAGE_AI_DETECTION_PROMPT},
-                        {
-                            "type": "image_url",
-                            "image_url": {
-                                "url": f"data:{mime};base64,{img_b64}"
-                            }
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={gemini_key}"
+        payload = {
+            "contents": [{
+                "parts": [
+                    {"text": IMAGE_AI_DETECTION_PROMPT},
+                    {
+                        "inlineData": {
+                            "mimeType": mime,
+                            "data": img_b64
                         }
-                    ]
-                }
-            ]
-        )
-
-        raw = response.choices[0].message.content.strip()
+                    }
+                ]
+            }],
+            "generationConfig": {
+                "temperature": 0.1,
+                "maxOutputTokens": 1000,
+            }
+        }
+        
+        response = requests.post(url, json=payload)
+        
+        if response.status_code != 200:
+            raise HTTPException(status_code=500, detail=f"Gemini API Error: {response.text}")
+            
+        data = response.json()
+        try:
+            raw = data["candidates"][0]["content"]["parts"][0]["text"].strip()
+        except (KeyError, IndexError):
+            raw = "{}"
 
         import json, re
         match = re.search(r"\{[\s\S]*\}", raw)
