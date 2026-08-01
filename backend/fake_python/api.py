@@ -10,6 +10,7 @@ from search_client import get_evidence
 from verifier_chain import build_verifier_chain
 from fastapi.middleware.cors import CORSMiddleware
 from groq import Groq
+from openai import OpenAI
 from gtts import gTTS
 from pathlib import Path
 
@@ -34,6 +35,19 @@ class ClaimRequest(BaseModel):
 chain = build_verifier_chain()
 groq_client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 
+openai_key = os.getenv("OPENAI_API_KEY")
+if openai_key and openai_key.startswith("github_pat_"):
+    openai_client = OpenAI(
+        api_key=openai_key,
+        base_url="https://models.inference.ai.azure.com",
+    )
+elif openai_key:
+    openai_client = OpenAI(
+        api_key=openai_key,
+    )
+else:
+    openai_client = None
+
 @app.post("/fact-check")
 def fact_check(request: ClaimRequest):
     try:
@@ -53,6 +67,9 @@ def fact_check(request: ClaimRequest):
 
 @app.post("/ocr")
 async def extract_text(file: UploadFile):
+    if not openai_client:
+        raise HTTPException(status_code=500, detail="OpenAI API client is not configured. Please check your OPENAI_API_KEY in backend/.env")
+
     # Check if the file is actually an image
     if not file.content_type.startswith("image/"):
         raise HTTPException(status_code=400, detail="File must be an image")
@@ -62,9 +79,9 @@ async def extract_text(file: UploadFile):
         img_b64 = base64.b64encode(image_bytes).decode("utf-8")
         mime = file.content_type or "image/jpeg"
 
-        # OCR using Groq Vision
-        response = groq_client.chat.completions.create(
-            model="llama-3.2-90b-vision-preview",
+        # OCR using OpenAI Vision
+        response = openai_client.chat.completions.create(
+            model="gpt-4o-mini",
             temperature=0.1,
             max_tokens=1000,
             messages=[
@@ -256,6 +273,8 @@ Respond ONLY with the JSON object."""
 
 @app.post("/detect-ai-image")
 async def detect_ai_image(file: UploadFile):
+    if not openai_client:
+        raise HTTPException(status_code=500, detail="OpenAI API client is not configured. Please check your OPENAI_API_KEY in backend/.env")
 
     if not file.content_type or not file.content_type.startswith("image/"):
         raise HTTPException(status_code=400, detail="File must be an image")
@@ -265,8 +284,8 @@ async def detect_ai_image(file: UploadFile):
         img_b64 = base64.b64encode(image_bytes).decode("utf-8")
         mime = file.content_type or "image/jpeg"
 
-        response = groq_client.chat.completions.create(
-            model="llama-3.2-90b-vision-preview",
+        response = openai_client.chat.completions.create(
+            model="gpt-4o",
             temperature=0.1,
             max_tokens=1000,
             messages=[
