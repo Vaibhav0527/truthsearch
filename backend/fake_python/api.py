@@ -169,7 +169,7 @@ async def voice_check(file: UploadFile, language: str = Form(default="auto")):
         # --- Transcribe with Groq Whisper ---
         lang_code = language.strip().lower() if language else "auto"
         whisper_kwargs = {
-            "model": "whisper-large-v3",
+            "model": "whisper-large-v3-turbo",
             "response_format": "verbose_json",  # gives us detected language
         }
         # If user picked a specific language, hint Whisper for better accuracy
