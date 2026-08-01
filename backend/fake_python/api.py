@@ -11,7 +11,7 @@ from verifier_chain import build_verifier_chain
 from fastapi.middleware.cors import CORSMiddleware
 from groq import Groq
 from groq import Groq
-import requests
+from openai import OpenAI
 from gtts import gTTS
 from pathlib import Path
 
@@ -38,7 +38,14 @@ groq_client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 
 groq_client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 
-gemini_key = os.getenv("GEMINI_API_KEY") or os.getenv("OPENAI_API_KEY")
+openrouter_key = os.getenv("OPENROUTER_API_KEY")
+if openrouter_key:
+    openai_client = OpenAI(
+        base_url="https://openrouter.ai/api/v1",
+        api_key=openrouter_key,
+    )
+else:
+    openai_client = None
 
 @app.post("/fact-check")
 def fact_check(request: ClaimRequest):
@@ -59,8 +66,8 @@ def fact_check(request: ClaimRequest):
 
 @app.post("/ocr")
 async def extract_text(file: UploadFile):
-    if not gemini_key:
-        raise HTTPException(status_code=500, detail="Gemini API key is not configured. Please add GEMINI_API_KEY or OPENAI_API_KEY to your .env file.")
+    if not openai_client:
+        raise HTTPException(status_code=500, detail="OpenRouter API key is not configured. Please add OPENROUTER_API_KEY to your .env file.")
 
     # Check if the file is actually an image
     if not file.content_type.startswith("image/"):
@@ -71,35 +78,28 @@ async def extract_text(file: UploadFile):
         img_b64 = base64.b64encode(image_bytes).decode("utf-8")
         mime = file.content_type or "image/jpeg"
 
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={gemini_key}"
-        payload = {
-            "contents": [{
-                "parts": [
-                    {"text": "Extract all readable text from this image. Output ONLY the extracted text. If there is no text, output nothing."},
-                    {
-                        "inlineData": {
-                            "mimeType": mime,
-                            "data": img_b64
+        # OCR using OpenRouter Vision
+        response = openai_client.chat.completions.create(
+            model="openai/gpt-4o-mini",
+            temperature=0.1,
+            max_tokens=1000,
+            messages=[
+                {
+                    "role": "user",
+                    "content": [
+                        {"type": "text", "text": "Extract all readable text from this image. Output ONLY the extracted text. If there is no text, output nothing."},
+                        {
+                            "type": "image_url",
+                            "image_url": {
+                                "url": f"data:{mime};base64,{img_b64}"
+                            }
                         }
-                    }
-                ]
-            }],
-            "generationConfig": {
-                "temperature": 0.1,
-                "maxOutputTokens": 1000,
-            }
-        }
-        
-        response = requests.post(url, json=payload)
-        
-        if response.status_code != 200:
-            raise HTTPException(status_code=500, detail=f"Gemini API Error: {response.text}")
-            
-        data = response.json()
-        try:
-            text = data["candidates"][0]["content"]["parts"][0]["text"].strip()
-        except (KeyError, IndexError):
-            text = ""
+                    ]
+                }
+            ]
+        )
+
+        text = response.choices[0].message.content.strip()
 
         if not text:
             raise ValueError("No text could be extracted from the image.")
@@ -272,8 +272,8 @@ Respond ONLY with the JSON object."""
 
 @app.post("/detect-ai-image")
 async def detect_ai_image(file: UploadFile):
-    if not gemini_key:
-        raise HTTPException(status_code=500, detail="Gemini API key is not configured. Please add GEMINI_API_KEY or OPENAI_API_KEY to your .env file.")
+    if not openai_client:
+        raise HTTPException(status_code=500, detail="OpenRouter API key is not configured. Please add OPENROUTER_API_KEY to your .env file.")
 
     if not file.content_type or not file.content_type.startswith("image/"):
         raise HTTPException(status_code=400, detail="File must be an image")
@@ -283,35 +283,27 @@ async def detect_ai_image(file: UploadFile):
         img_b64 = base64.b64encode(image_bytes).decode("utf-8")
         mime = file.content_type or "image/jpeg"
 
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={gemini_key}"
-        payload = {
-            "contents": [{
-                "parts": [
-                    {"text": IMAGE_AI_DETECTION_PROMPT},
-                    {
-                        "inlineData": {
-                            "mimeType": mime,
-                            "data": img_b64
+        response = openai_client.chat.completions.create(
+            model="openai/gpt-4o",
+            temperature=0.1,
+            max_tokens=1000,
+            messages=[
+                {
+                    "role": "user",
+                    "content": [
+                        {"type": "text", "text": IMAGE_AI_DETECTION_PROMPT},
+                        {
+                            "type": "image_url",
+                            "image_url": {
+                                "url": f"data:{mime};base64,{img_b64}"
+                            }
                         }
-                    }
-                ]
-            }],
-            "generationConfig": {
-                "temperature": 0.1,
-                "maxOutputTokens": 1000,
-            }
-        }
-        
-        response = requests.post(url, json=payload)
-        
-        if response.status_code != 200:
-            raise HTTPException(status_code=500, detail=f"Gemini API Error: {response.text}")
-            
-        data = response.json()
-        try:
-            raw = data["candidates"][0]["content"]["parts"][0]["text"].strip()
-        except (KeyError, IndexError):
-            raw = "{}"
+                    ]
+                }
+            ]
+        )
+
+        raw = response.choices[0].message.content.strip()
 
         import json, re
         match = re.search(r"\{[\s\S]*\}", raw)
