@@ -7,7 +7,7 @@ import os
 load_dotenv(dotenv_path=Path(__file__).resolve().parent.parent / ".env", override=True)
 
 try:
-    search_tool = TavilySearchResults(k=SEARCH_RESULTS_K)
+    search_tool = TavilySearchResults(k=SEARCH_RESULTS_K, search_depth="advanced", include_raw_content=True)
 except Exception:
     search_tool = None
 
