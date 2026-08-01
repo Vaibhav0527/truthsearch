@@ -3,34 +3,27 @@ from pydantic import BaseModel
 import os
 import tempfile
 import base64
-import pytesseract
-import cv2
-import numpy as np
+
 from fastapi import UploadFile, HTTPException, Form
 from dotenv import load_dotenv
 from search_client import get_evidence
 from verifier_chain import build_verifier_chain
 from fastapi.middleware.cors import CORSMiddleware
 from groq import Groq
-from openai import OpenAI
 from gtts import gTTS
 from pathlib import Path
 
 # Explicitly load .env from the backend/ directory (parent of fake_python/)
 load_dotenv(dotenv_path=Path(__file__).resolve().parent.parent / ".env", override=True)
 
-# Python handles the backslashes automatically when reading from the environment
-tesseract_path = os.getenv("TESSERACT_PATH")
 
-if tesseract_path:
-    pytesseract.pytesseract.tesseract_cmd = tesseract_path
 
 app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],  # restrict later
-    allow_credentials=True,
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -40,10 +33,6 @@ class ClaimRequest(BaseModel):
 
 chain = build_verifier_chain()
 groq_client = Groq(api_key=os.getenv("GROQ_API_KEY"))
-openai_client = OpenAI(
-    api_key=os.getenv("OPENAI_API_KEY"),
-    base_url="https://models.inference.ai.azure.com",
-)
 
 @app.post("/fact-check")
 def fact_check(request: ClaimRequest):
@@ -70,20 +59,34 @@ async def extract_text(file: UploadFile):
 
     try:
         image_bytes = await file.read()
-        np_img = np.frombuffer(image_bytes, np.uint8)
-        img = cv2.imdecode(np_img, cv2.IMREAD_COLOR)
+        img_b64 = base64.b64encode(image_bytes).decode("utf-8")
+        mime = file.content_type or "image/jpeg"
 
-        if img is None:
-            raise ValueError("Failed to decode image")
+        # OCR using Groq Vision
+        response = groq_client.chat.completions.create(
+            model="llama-3.2-90b-vision-preview",
+            temperature=0.1,
+            max_tokens=1000,
+            messages=[
+                {
+                    "role": "user",
+                    "content": [
+                        {"type": "text", "text": "Extract all readable text from this image. Output ONLY the extracted text. If there is no text, output nothing."},
+                        {
+                            "type": "image_url",
+                            "image_url": {
+                                "url": f"data:{mime};base64,{img_b64}"
+                            }
+                        }
+                    ]
+                }
+            ]
+        )
 
-        # Your preprocessing
-        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        
-        # Tip: Use Otsu's thresholding for better results with varied lighting
-        _, thresh = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+        text = response.choices[0].message.content.strip()
 
-        # OCR
-        text = pytesseract.image_to_string(thresh)
+        if not text:
+            raise ValueError("No text could be extracted from the image.")
 
         evidence = get_evidence(text)
         result = chain.invoke({
@@ -262,8 +265,8 @@ async def detect_ai_image(file: UploadFile):
         img_b64 = base64.b64encode(image_bytes).decode("utf-8")
         mime = file.content_type or "image/jpeg"
 
-        response = openai_client.chat.completions.create(
-            model="gpt-4o",
+        response = groq_client.chat.completions.create(
+            model="llama-3.2-90b-vision-preview",
             temperature=0.1,
             max_tokens=1000,
             messages=[

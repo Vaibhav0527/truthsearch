@@ -8,7 +8,6 @@ const NAV_LINKS = [
   { id: "imagecheck", label: "IMAGE", icon: (s) => <Ic.Img s={s} /> },
   { id: "voicecheck", label: "VOICE", icon: (s) => <Ic.Mic s={s} /> },
   { id: "aidetect", label: "AI DETECT", icon: (s) => <Ic.Eye s={s} /> },
-  { id: "history", label: "HISTORY", icon: (s) => <Ic.Clock s={s} /> },
 ];
 
 // ─── NAVBAR ──────────────────────────────────────────────────────────────────

@@ -41,10 +41,6 @@ export const LANGUAGES = [
   { code: "ur", label: "اردو" },
 ];
 
-// ─── SAVE TO HISTORY (fire-and-forget) ───────────────────────────────────────
-export const saveToHistory = (entry) => {
-  axios.post(`${BACKEND}/api/history/save`, entry).catch(() => {});
-};
 
 // ─── STEPS SHOWN DURING LOADING ──────────────────────────────────────────────
 export const LOADING_STEPS = ["Searching evidence", "Cross-referencing", "AI verification", "Building verdict"];

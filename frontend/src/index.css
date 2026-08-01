@@ -182,4 +182,15 @@
     max-width: 100% !important;
     height: auto !important;
   }
+  
+  .responsive-panel-left {
+    border-right: none !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+    max-height: none !important;
+    overflow-y: visible !important;
+  }
+  .responsive-panel-right {
+    max-height: none !important;
+    overflow-y: visible !important;
+  }
 }

@@ -9,7 +9,6 @@ import TextCheckPage from "../pages/TextCheckPage";
 import ImageCheckPage from "../pages/ImageCheckPage";
 import VoiceCheckPage from "../pages/VoiceCheckPage";
 import AIDetectPage from "../pages/AIDetectPage";
-import HistoryPage from "../pages/HistoryPage";
 import DocsPage from "../pages/DocsPage";
 import ApiReferencePage from "../pages/ApiReferencePage";
 import BlogPage from "../pages/BlogPage";
@@ -36,7 +35,6 @@ const routeToPage = {
   "/image-check": "imagecheck",
   "/voice-check": "voicecheck",
   "/ai-detect": "aidetect",
-  "/history": "history",
   "/docs": "docs",
   "/api-reference": "apireference",
   "/blog": "blog",
@@ -52,7 +50,6 @@ const pageToRoute = {
   imagecheck: "/image-check",
   voicecheck: "/voice-check",
   aidetect: "/ai-detect",
-  history: "/history",
   docs: "/docs",
   apireference: "/api-reference",
   blog: "/blog",
@@ -144,7 +141,6 @@ const App = () => {
           <Route path="/image-check" element={<ImageCheckPage t={t} setPage={setPage} isDark={isDark} />} />
           <Route path="/voice-check" element={<VoiceCheckPage t={t} setPage={setPage} isDark={isDark} />} />
           <Route path="/ai-detect" element={<AIDetectPage t={t} setPage={setPage} isDark={isDark} />} />
-          <Route path="/history" element={<HistoryPage t={t} setPage={setPage} isDark={isDark} />} />
           <Route path="/docs" element={<DocsPage t={t} setPage={setPage} isDark={isDark} />} />
           <Route path="/api-reference" element={<ApiReferencePage t={t} setPage={setPage} isDark={isDark} />} />
           <Route path="/blog" element={<BlogPage t={t} setPage={setPage} isDark={isDark} />} />

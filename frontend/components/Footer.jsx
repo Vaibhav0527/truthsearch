@@ -12,7 +12,6 @@ const PLATFORM = [
   { label: "Image OCR Check", page: "imagecheck", route: "/image-check" },
   { label: "Voice Deepfake Check", page: "voicecheck", route: "/voice-check" },
   { label: "AI Detection", page: "aidetect", route: "/ai-detect" },
-  { label: "History Log", page: "history", route: "/history" },
 ];
 
 const RESOURCES = [

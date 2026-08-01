@@ -6,7 +6,7 @@ import TiltCard from "../components/TiltCard";
 import Btn from "../components/Btn";
 import TrustGauge from "../components/TrustGauge";
 import Scanner from "../components/Scanner";
-import { API, saveToHistory, verdictColor, verdictBg, verdictBorder, downloadReport, LOADING_STEPS } from "../utils/factcheckHelpers";
+import { API, verdictColor, verdictBg, verdictBorder, downloadReport, LOADING_STEPS } from "../utils/factcheckHelpers";
 import Footer from "../components/Footer";
 
 // ─── TEXT CHECK PAGE ─────────────────────────────────────────────────────────
@@ -23,14 +23,6 @@ export default function TextCheckPage({ t, setPage }) {
     try {
       const { data } = await axios.post(`${API}/fact-check`, { claim: claim.trim() });
       setResult(data);
-      saveToHistory({
-        input_type: "text",
-        original_input: claim.trim(),
-        verdict: data.verdict,
-        confidence: data.confidence,
-        explanation: data.explanation,
-        sources: data.sources || [],
-      });
     } catch (err) {
       setError(err.response?.data?.detail || err.message || "Something went wrong");
     } finally {
@@ -49,7 +41,7 @@ export default function TextCheckPage({ t, setPage }) {
     <div className="responsive-grid-4" style={{ paddingTop: 84, minHeight: "100vh", display: "grid", gridTemplateColumns: "1fr 1fr", position: "relative", zIndex: 1 }}>
 
       {/* ───── LEFT: INPUT PANEL ───── */}
-      <div className="responsive-section-padding" style={{ borderRight: `1px solid ${t.line}`, padding: "52px 48px", overflowY: "auto" }}>
+      <div className="responsive-section-padding responsive-panel-left" style={{ borderRight: `1px solid ${t.line}`, padding: "52px 48px", overflowY: "auto" }}>
 
         <button onClick={() => setPage("landing")} data-mag style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "6px 14px", borderRadius: 8, border: `1px solid ${t.border}`, background: "transparent", color: t.muted, fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: ".08em", cursor: "pointer", transition: "all .25s", marginBottom: 20 }} onMouseEnter={e => { e.currentTarget.style.color = t.accent; e.currentTarget.style.borderColor = t.accent + "50"; }} onMouseLeave={e => { e.currentTarget.style.color = t.muted; e.currentTarget.style.borderColor = t.border; }}><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="19 12 5 12" /><polyline points="12 19 5 12 12 5" /></svg>BACK</button>
         <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 56, letterSpacing: ".03em", color: t.text, lineHeight: .95, marginBottom: 12 }}>
@@ -147,7 +139,7 @@ export default function TextCheckPage({ t, setPage }) {
       </div>
 
       {/* ───── RIGHT: RESULTS PANEL ───── */}
-      <div ref={rRef} style={{ padding: "52px 48px", overflowY: "auto", maxHeight: "calc(100vh - 68px)" }}>
+      <div ref={rRef} className="responsive-section-padding responsive-panel-right" style={{ padding: "52px 48px", overflowY: "auto", maxHeight: "calc(100vh - 68px)" }}>
 
         {/* Empty state */}
         {!result && !analyzing && !error && (

@@ -10,7 +10,6 @@ export default function FullMenu({ open, onClose, page, setPage, isDark, toggleT
     { id: "imagecheck", label: "IMAGE OCR", num: "03" },
     { id: "voicecheck", label: "VOICE CHECK", num: "04" },
     { id: "aidetect", label: "AI DETECT", num: "05" },
-    { id: "history", label: "HISTORY", num: "06" },
   ];
   const [hovIdx, setHovIdx] = useState(null);
   const go = (id) => { onClose(); setTimeout(() => setPage(id), 420); };

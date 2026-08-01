@@ -6,7 +6,7 @@ import TiltCard from "../components/TiltCard";
 import Btn from "../components/Btn";
 import TrustGauge from "../components/TrustGauge";
 import Scanner from "../components/Scanner";
-import { API, LANGUAGES, saveToHistory, verdictColor, verdictBg, verdictBorder, downloadReport, LOADING_STEPS } from "../utils/factcheckHelpers";
+import { API, LANGUAGES, verdictColor, verdictBg, verdictBorder, downloadReport, LOADING_STEPS } from "../utils/factcheckHelpers";
 import Footer from "../components/Footer";
 
 // ─── VOICE CHECK PAGE ────────────────────────────────────────────────────────
@@ -90,15 +90,6 @@ export default function VoiceCheckPage({ t, setPage }) {
         setResult(data.result);
         setAudioResponse(data.audio_response || null);
         setDetectedLang(data.detected_language || "");
-        saveToHistory({
-          input_type: "voice",
-          original_input: data.transcribed_text || "[Voice recording]",
-          verdict: data.result.verdict,
-          confidence: data.result.confidence,
-          explanation: data.result.explanation,
-          sources: data.result.sources || [],
-        });
-
         if (data.audio_response) {
           const raw = atob(data.audio_response);
           const bytes = new Uint8Array(raw.length);
@@ -136,7 +127,7 @@ export default function VoiceCheckPage({ t, setPage }) {
     <div className="responsive-grid-4" style={{ paddingTop: 84, minHeight: "100vh", display: "grid", gridTemplateColumns: "1fr 1fr", position: "relative", zIndex: 1 }}>
 
       {/* ───── LEFT: INPUT PANEL ───── */}
-      <div className="responsive-section-padding" style={{ borderRight: `1px solid ${t.line}`, padding: "52px 48px", overflowY: "auto" }}>
+      <div className="responsive-section-padding responsive-panel-left" style={{ borderRight: `1px solid ${t.line}`, padding: "52px 48px", overflowY: "auto" }}>
 
         <button onClick={() => setPage("landing")} data-mag style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "6px 14px", borderRadius: 8, border: `1px solid ${t.border}`, background: "transparent", color: t.muted, fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: ".08em", cursor: "pointer", transition: "all .25s", marginBottom: 20 }} onMouseEnter={e => { e.currentTarget.style.color = t.accent; e.currentTarget.style.borderColor = t.accent + "50"; }} onMouseLeave={e => { e.currentTarget.style.color = t.muted; e.currentTarget.style.borderColor = t.border; }}><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="19 12 5 12" /><polyline points="12 19 5 12 12 5" /></svg>BACK</button>
         <div style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 48, letterSpacing: ".03em", color: t.text, lineHeight: .95, marginBottom: 8 }}>
@@ -331,7 +322,7 @@ export default function VoiceCheckPage({ t, setPage }) {
       </div>
 
       {/* ───── RIGHT: RESULTS PANEL ───── */}
-      <div ref={rRef} style={{ padding: "52px 48px", overflowY: "auto", maxHeight: "calc(100vh - 68px)" }}>
+      <div ref={rRef} className="responsive-section-padding responsive-panel-right" style={{ padding: "52px 48px", overflowY: "auto", maxHeight: "calc(100vh - 68px)" }}>
 
         {/* Empty state */}
         {!result && !voiceAnalyzing && !error && (
