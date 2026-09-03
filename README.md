@@ -115,4 +115,4 @@ npm run dev
   - `POST /detect-ai-image` - Analyze an image for AI-generation artifacts.
 
 ## 📜 License
-ISC License
+ISC 
