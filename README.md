@@ -2,6 +2,9 @@
 
 TruthSearch is a full-stack, AI-powered application designed to verify facts, analyze images, transcribe and fact-check audio, and detect AI-generated media. The project combines a modern React frontend with a dual-backend architecture (Node.js for user management and a Python FastAPI backend for heavy AI workloads).
 
+## 🌍 Live Demo
+- **Frontend (Vercel)**: [https://frontend-hazel-three-30.vercel.app](https://frontend-hazel-three-30.vercel.app)
+- **Backend API (Render)**: [https://truthsearch-4.onrender.com](https://truthsearch-4.onrender.com)
 ## 🚀 Features
 
 - **Fact-Checking Engine**: Submit claims and get evidence-backed verdicts powered by advanced LLMs (Groq, OpenRouter, Gemini).
